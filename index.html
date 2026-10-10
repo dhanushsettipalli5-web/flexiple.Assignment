@@ -1,0 +1,1737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GCC Intel — Platform Prototype</title>
+<style>
+  :root {
+    --bg: #07070d;
+    --surface: #0f0f18;
+    --surface2: #16162000;
+    --card: #111120;
+    --card2: #16162a;
+    --border: #252535;
+    --border2: #2e2e45;
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --accent3: #c7d2fe;
+    --gold: #f59e0b;
+    --green: #10b981;
+    --teal: #14b8a6;
+    --red: #ef4444;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --dim: #475569;
+    --sidebar-w: 220px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    height: 52px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 1.25rem;
+    gap: 1.5rem;
+    flex-shrink: 0;
+    z-index: 50;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+  }
+
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .logo span { color: var(--accent2); }
+
+  .topbar-search {
+    flex: 1;
+    max-width: 480px;
+    display: flex;
+    align-items: center;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0 10px;
+    gap: 8px;
+    transition: border-color 0.2s;
+  }
+
+  .topbar-search:focus-within { border-color: var(--accent); }
+
+  .topbar-search input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 0.825rem;
+    padding: 7px 0;
+  }
+
+  .topbar-search input::placeholder { color: var(--dim); }
+
+  .search-icon { color: var(--dim); font-size: 13px; }
+
+  .topbar-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 999px;
+  }
+
+  .badge-accent { background: rgba(99,102,241,0.15); color: var(--accent2); border: 1px solid rgba(99,102,241,0.3); }
+  .badge-green { background: rgba(16,185,129,0.12); color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
+
+  /* ── LAYOUT ── */
+  .layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+
+  .sidebar-section { padding: 1rem 0.875rem 0.5rem; }
+
+  .sidebar-heading {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dim);
+    padding: 0 0.25rem 0.5rem;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+  }
+
+  .nav-item:hover { background: var(--card2); color: var(--text); }
+  .nav-item.active { background: rgba(99,102,241,0.15); color: var(--accent2); font-weight: 600; }
+  .nav-item .nav-icon { font-size: 14px; width: 18px; text-align: center; }
+
+  .nav-count {
+    margin-left: auto;
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: var(--border2);
+    color: var(--muted);
+    padding: 1px 6px;
+    border-radius: 99px;
+  }
+
+  /* ── MAIN ── */
+  .main {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── VIEW ── */
+  .view { display: none; flex: 1; overflow: auto; padding: 1.5rem; }
+  .view.active { display: flex; flex-direction: column; }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    gap: 1rem;
+  }
+
+  .page-title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em; }
+  .page-sub { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+
+  /* ── FILTER BAR ── */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-label { font-size: 0.72rem; color: var(--dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+
+  select {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    font-size: 0.78rem;
+    padding: 5px 28px 5px 10px;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    transition: border-color 0.15s;
+  }
+
+  select:focus { border-color: var(--accent); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 7px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+
+  .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-ghost { background: var(--card); color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+  }
+
+  .stat-card-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+  .stat-card-val { font-size: 1.6rem; font-weight: 800; line-height: 1; }
+  .stat-card-change { font-size: 0.72rem; color: var(--green); margin-top: 4px; }
+
+  /* ── GCC TABLE ── */
+  .data-table { width: 100%; border-collapse: collapse; }
+
+  .data-table th {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dim);
+    text-align: left;
+    padding: 0.5rem 0.875rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .data-table th:hover { color: var(--accent2); }
+
+  .data-table td {
+    padding: 0.75rem 0.875rem;
+    border-bottom: 1px solid rgba(37,37,53,0.7);
+    font-size: 0.8rem;
+    vertical-align: middle;
+  }
+
+  .data-table tr:hover td { background: rgba(99,102,241,0.04); }
+
+  .data-table tr.selected td { background: rgba(99,102,241,0.08); }
+
+  .cell-primary { font-weight: 600; color: var(--text); }
+  .cell-primary small { display: block; font-weight: 400; color: var(--muted); font-size: 0.72rem; margin-top: 1px; }
+
+  /* TAGS */
+  .tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .tag-sector-tech { background: rgba(99,102,241,0.15); color: var(--accent2); }
+  .tag-sector-bfsi { background: rgba(245,158,11,0.12); color: var(--gold); }
+  .tag-sector-health { background: rgba(16,185,129,0.12); color: var(--green); }
+  .tag-sector-erd { background: rgba(20,184,166,0.12); color: var(--teal); }
+  .tag-sector-retail { background: rgba(239,68,68,0.1); color: #f87171; }
+
+  /* SCORE PILL */
+  .score-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .score-high { background: rgba(16,185,129,0.12); color: var(--green); }
+  .score-mid { background: rgba(245,158,11,0.12); color: var(--gold); }
+  .score-low { background: rgba(239,68,68,0.1); color: #f87171; }
+
+  /* ── DETAIL PANEL ── */
+  .detail-panel {
+    width: 380px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .detail-panel.open { display: flex; }
+
+  .detail-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .detail-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--dim);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px;
+    border-radius: 4px;
+    transition: color 0.15s;
+  }
+
+  .detail-close:hover { color: var(--text); }
+
+  .detail-body { flex: 1; overflow-y: auto; padding: 1.25rem; }
+
+  .detail-section { margin-bottom: 1.5rem; }
+  .detail-section-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--dim);
+    margin-bottom: 0.75rem;
+  }
+
+  .kv-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(37,37,53,0.6);
+    font-size: 0.8rem;
+  }
+
+  .kv-row:last-child { border-bottom: none; }
+  .kv-key { color: var(--muted); }
+  .kv-val { font-weight: 600; text-align: right; }
+
+  /* ── CITY SCORECARD VIEW ── */
+  .city-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .city-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+
+  .city-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .city-card.selected { border-color: var(--accent); background: rgba(99,102,241,0.06); }
+
+  .city-name { font-size: 1rem; font-weight: 800; margin-bottom: 0.25rem; }
+  .city-sub { font-size: 0.72rem; color: var(--muted); margin-bottom: 1rem; }
+
+  .city-score-ring {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .ring-svg { width: 80px; height: 80px; transform: rotate(-90deg); }
+
+  .ring-bg { fill: none; stroke: var(--border2); stroke-width: 8; }
+  .ring-fill { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; }
+
+  .ring-label {
+    position: absolute;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .city-score-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .city-dims {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .dim-bar {
+    display: grid;
+    grid-template-columns: 80px 1fr 32px;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+  }
+
+  .dim-name { color: var(--muted); }
+  .dim-track { height: 4px; background: var(--border2); border-radius: 99px; overflow: hidden; }
+  .dim-fill { height: 100%; border-radius: 99px; }
+  .dim-val { text-align: right; font-weight: 600; font-size: 0.7rem; }
+
+  /* ── INCENTIVES VIEW ── */
+  .incentive-table { width: 100%; border-collapse: collapse; }
+
+  .incentive-table th {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--dim);
+    text-align: center;
+    padding: 0.75rem 0.75rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+  }
+
+  .incentive-table th:first-child { text-align: left; }
+  .incentive-table th:last-child { border-right: none; }
+
+  .incentive-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(37,37,53,0.7);
+    border-right: 1px solid rgba(37,37,53,0.5);
+    font-size: 0.8rem;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .incentive-table td:first-child { text-align: left; font-weight: 600; color: var(--text); }
+  .incentive-table td:last-child { border-right: none; }
+
+  .check { color: var(--green); font-size: 1rem; }
+  .cross { color: var(--dim); font-size: 1rem; }
+  .partial { color: var(--gold); font-size: 0.75rem; font-weight: 600; }
+
+  /* ── CALCULATOR VIEW ── */
+  .calc-layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 1.5rem;
+    flex: 1;
+  }
+
+  .calc-inputs {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+
+  .field-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  input[type=range] {
+    width: 100%;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .field-val {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--accent2);
+  }
+
+  .calc-results {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .result-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .result-card-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--dim);
+    margin-bottom: 1rem;
+  }
+
+  .result-big {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .result-sub { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+  .vs-bar {
+    display: flex;
+    gap: 6px;
+    margin-top: 1rem;
+    height: 32px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .vs-seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    transition: flex 0.4s ease;
+  }
+
+  .recommendation-box {
+    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    border: 1px solid;
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+
+  /* ── PROVIDER VIEW ── */
+  .provider-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .provider-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .provider-card:hover { border-color: var(--accent); }
+
+  .provider-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .provider-icon {
+    width: 38px; height: 38px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    background: var(--card2);
+    border: 1px solid var(--border);
+  }
+
+  .provider-name { font-size: 0.9rem; font-weight: 700; }
+  .provider-type { font-size: 0.72rem; color: var(--muted); }
+
+  .provider-ratings { display: flex; flex-direction: column; gap: 4px; }
+
+  .rating-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 28px;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+  }
+
+  .rating-name { color: var(--muted); }
+  .rating-track { height: 4px; background: var(--border2); border-radius: 99px; overflow: hidden; }
+  .rating-fill { height: 100%; border-radius: 99px; background: var(--accent); }
+  .rating-val { text-align: right; font-weight: 700; color: var(--text); }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--dim);
+    gap: 0.5rem;
+    padding: 3rem;
+  }
+
+  .empty-icon { font-size: 2.5rem; }
+  .empty-text { font-size: 0.875rem; text-align: center; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--dim); }
+
+  /* ── SEARCH RESULTS ── */
+  .search-results-banner {
+    background: rgba(99,102,241,0.08);
+    border: 1px solid rgba(99,102,241,0.2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.78rem;
+    color: var(--accent3);
+    margin-bottom: 1rem;
+    display: none;
+  }
+
+  .search-results-banner.visible { display: flex; align-items: center; gap: 8px; }
+
+  .clear-search {
+    margin-left: auto;
+    cursor: pointer;
+    color: var(--muted);
+    background: none;
+    border: none;
+    font-size: 0.78rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .clear-search:hover { color: var(--text); background: var(--border); }
+
+  /* ── TABLE WRAPPER ── */
+  .table-wrapper { flex: 1; overflow: auto; border-radius: 10px; border: 1px solid var(--border); }
+
+  .content-row { display: flex; flex: 1; overflow: hidden; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon">◈</div>
+    GCC <span>Intel</span>
+  </div>
+  <div class="topbar-search">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="globalSearch" placeholder="Search GCCs, cities, sectors, providers…" autocomplete="off">
+  </div>
+  <div class="topbar-right">
+    <span class="badge badge-green">● Live</span>
+    <span class="badge badge-accent">2,117 GCCs tracked</span>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Explore</div>
+      <div class="nav-item active" onclick="switchView('registry')">
+        <span class="nav-icon">◫</span> GCC Registry <span class="nav-count">142</span>
+      </div>
+      <div class="nav-item" onclick="switchView('cities')">
+        <span class="nav-icon">⬡</span> City Scorecards
+      </div>
+      <div class="nav-item" onclick="switchView('incentives')">
+        <span class="nav-icon">◈</span> State Incentives
+      </div>
+      <div class="nav-item" onclick="switchView('providers')">
+        <span class="nav-icon">◎</span> Providers
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Tools</div>
+      <div class="nav-item" onclick="switchView('calculator')">
+        <span class="nav-icon">⊞</span> EOR vs Entity Calc
+      </div>
+    </div>
+    <div class="sidebar-section" style="margin-top:auto;padding-top:1.5rem;">
+      <div style="padding: 10px; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px;">
+        <div style="font-size:0.7rem;color:var(--accent2);font-weight:700;margin-bottom:4px;">Prototype</div>
+        <div style="font-size:0.68rem;color:var(--muted);line-height:1.5;">142 GCCs seeded. Real data from MCA filings, NASSCOM and state GCC policies.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN + DETAIL -->
+  <div class="main">
+
+    <!-- ═══ REGISTRY VIEW ═══ -->
+    <div class="view active" id="view-registry">
+      <div class="page-header">
+        <div>
+          <div class="page-title">GCC Registry</div>
+          <div class="page-sub">Searchable directory of Global Capability Centres operating in India</div>
+        </div>
+        <button class="btn btn-primary" onclick="exportCSV()">↓ Export CSV</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-card-label">Total GCCs</div>
+          <div class="stat-card-val" id="stat-total">142</div>
+          <div class="stat-card-change">↑ 32% since FY2021</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">New (2024–26)</div>
+          <div class="stat-card-val" style="color:var(--green)" id="stat-new">38</div>
+          <div class="stat-card-change" style="color:var(--muted);">sample dataset</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Avg Headcount</div>
+          <div class="stat-card-val" style="color:var(--accent2);">1,240</div>
+          <div class="stat-card-change">↑ from 870 in FY2021</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Cities Covered</div>
+          <div class="stat-card-val" style="color:var(--gold);">10</div>
+          <div class="stat-card-change">6 metro + 4 Tier-2</div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <span class="filter-label">Filter:</span>
+        <select id="filterCity" onchange="applyFilters()">
+          <option value="">All Cities</option>
+          <option>Bengaluru</option>
+          <option>Hyderabad</option>
+          <option>Chennai</option>
+          <option>Pune</option>
+          <option>Delhi-NCR</option>
+          <option>Mumbai</option>
+          <option>Ahmedabad</option>
+          <option>Kochi</option>
+          <option>Coimbatore</option>
+          <option>Indore</option>
+        </select>
+        <select id="filterSector" onchange="applyFilters()">
+          <option value="">All Sectors</option>
+          <option>Technology</option>
+          <option>BFSI</option>
+          <option>Healthcare</option>
+          <option>ER&D</option>
+          <option>Retail / CPG</option>
+        </select>
+        <select id="filterSize" onchange="applyFilters()">
+          <option value="">All Sizes</option>
+          <option value="small">Small (&lt;500)</option>
+          <option value="mid">Mid (500–2000)</option>
+          <option value="large">Large (2000+)</option>
+        </select>
+        <select id="filterYear" onchange="applyFilters()">
+          <option value="">All Vintages</option>
+          <option value="new">New (2023+)</option>
+          <option value="mid">Established (2018–22)</option>
+          <option value="old">Mature (pre-2018)</option>
+        </select>
+        <button class="btn btn-ghost" onclick="clearFilters()">✕ Clear</button>
+      </div>
+
+      <div class="search-results-banner" id="searchBanner"></div>
+
+      <div class="content-row">
+        <div class="table-wrapper">
+          <table class="data-table" id="gccTable">
+            <thead>
+              <tr>
+                <th onclick="sortTable('company')">Company ↕</th>
+                <th onclick="sortTable('hq')">HQ Country ↕</th>
+                <th onclick="sortTable('city')">City ↕</th>
+                <th onclick="sortTable('sector')">Sector ↕</th>
+                <th onclick="sortTable('headcount')">Headcount ↕</th>
+                <th onclick="sortTable('founded')">Est. Year ↕</th>
+                <th onclick="sortTable('mandate')">Primary Mandate ↕</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="gccTableBody"></tbody>
+          </table>
+        </div>
+        <div class="detail-panel" id="detailPanel">
+          <div class="detail-header">
+            <div>
+              <div style="font-size:1rem;font-weight:800;" id="dp-name">—</div>
+              <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;" id="dp-sub">—</div>
+            </div>
+            <button class="detail-close" onclick="closeDetail()">✕</button>
+          </div>
+          <div class="detail-body" id="detailBody"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CITY SCORECARDS VIEW ═══ -->
+    <div class="view" id="view-cities">
+      <div class="page-header">
+        <div>
+          <div class="page-title">City Scorecards</div>
+          <div class="page-sub">Multi-dimensional scoring for GCC location decisions</div>
+        </div>
+      </div>
+      <div class="city-grid" id="cityGrid"></div>
+    </div>
+
+    <!-- ═══ STATE INCENTIVES VIEW ═══ -->
+    <div class="view" id="view-incentives">
+      <div class="page-header">
+        <div>
+          <div class="page-title">State Incentive Comparison</div>
+          <div class="page-sub">Side-by-side comparison of GCC policies across Indian states</div>
+        </div>
+      </div>
+      <div class="table-wrapper" style="flex:1;">
+        <table class="incentive-table" id="incentiveTable"></table>
+      </div>
+    </div>
+
+    <!-- ═══ PROVIDERS VIEW ═══ -->
+    <div class="view" id="view-providers">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Provider Benchmarks</div>
+          <div class="page-sub">Independent ratings for GCC setup advisors, EOR providers and real estate firms</div>
+        </div>
+        <div class="filter-bar" style="margin-bottom:0;">
+          <select id="providerTypeFilter" onchange="renderProviders()">
+            <option value="">All Types</option>
+            <option value="advisor">Setup Advisor</option>
+            <option value="eor">EOR Provider</option>
+            <option value="re">Real Estate</option>
+          </select>
+        </div>
+      </div>
+      <div class="provider-grid" id="providerGrid"></div>
+    </div>
+
+    <!-- ═══ CALCULATOR VIEW ═══ -->
+    <div class="view" id="view-calculator">
+      <div class="page-header">
+        <div>
+          <div class="page-title">EOR vs. Own Entity Calculator</div>
+          <div class="page-sub">Find the exact headcount crossover where entity setup beats EOR</div>
+        </div>
+      </div>
+      <div class="calc-layout">
+        <div class="calc-inputs">
+          <div style="font-size:0.8rem;color:var(--muted);line-height:1.6;padding-bottom:0.75rem;border-bottom:1px solid var(--border);">
+            Adjust the inputs below to match your GCC profile. The model uses current India market rates.
+          </div>
+
+          <div class="field-group">
+            <div class="field-label">Target Headcount</div>
+            <input type="range" id="headcount" min="5" max="200" value="30" oninput="updateCalc()">
+            <div class="field-val" id="val-headcount">30 people</div>
+          </div>
+
+          <div class="field-group">
+            <div class="field-label">Avg. Annual CTC per person (USD)</div>
+            <input type="range" id="ctc" min="10000" max="60000" step="1000" value="25000" oninput="updateCalc()">
+            <div class="field-val" id="val-ctc">$25,000</div>
+          </div>
+
+          <div class="field-group">
+            <div class="field-label">EOR Platform Markup (%)</div>
+            <input type="range" id="markup" min="8" max="25" value="15" oninput="updateCalc()">
+            <div class="field-val" id="val-markup">15%</div>
+          </div>
+
+          <div class="field-group">
+            <div class="field-label">City</div>
+            <select id="calcCity" onchange="updateCalc()" style="width:100%;">
+              <option value="bengaluru">Bengaluru</option>
+              <option value="hyderabad">Hyderabad</option>
+              <option value="chennai">Chennai</option>
+              <option value="pune">Pune</option>
+              <option value="ncrdelhi">Delhi-NCR</option>
+              <option value="mumbai">Mumbai</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <div class="field-label">Setup Horizon (years)</div>
+            <input type="range" id="horizon" min="1" max="5" value="3" oninput="updateCalc()">
+            <div class="field-val" id="val-horizon">3 years</div>
+          </div>
+        </div>
+
+        <div class="calc-results" id="calcResults"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+
+const GCC_DATA = [
+  // Tech sector
+  { id:1,  company:"Goldman Sachs",        hq:"USA",  city:"Bengaluru", sector:"BFSI",          headcount:9500,  founded:2004, mandate:"Risk & Tech",      desc:"One of India's largest BFSI GCCs. Runs global risk systems, quant research and engineering." },
+  { id:2,  company:"JPMorgan Chase",       hq:"USA",  city:"Bengaluru", sector:"BFSI",          headcount:11000, founded:2002, mandate:"Engineering",      desc:"Full-stack tech and operations. Manages global trading platforms, fraud systems and cloud infra." },
+  { id:3,  company:"Microsoft",            hq:"USA",  city:"Hyderabad", sector:"Technology",    headcount:18000, founded:1990, mandate:"Product Dev",       desc:"Microsoft's largest engineering centre outside the US. Azure, Office 365 and AI platform work." },
+  { id:4,  company:"Google",               hq:"USA",  city:"Hyderabad", sector:"Technology",    headcount:5000,  founded:2004, mandate:"Eng & Ops",        desc:"Engineering, cloud infra and Google Maps product development." },
+  { id:5,  company:"Amazon",               hq:"USA",  city:"Hyderabad", sector:"Technology",    headcount:25000, founded:2004, mandate:"Alexa / AWS",       desc:"Largest private employer in Hyderabad. AWS platform, Alexa and fulfillment tech." },
+  { id:6,  company:"Apple",                hq:"USA",  city:"Hyderabad", sector:"Technology",    headcount:4000,  founded:2017, mandate:"Maps & Siri",       desc:"Maps quality, Siri improvements and hardware engineering support." },
+  { id:7,  company:"Walmart",              hq:"USA",  city:"Bengaluru", sector:"Retail / CPG",  headcount:6000,  founded:2018, mandate:"Tech & Ops",        desc:"Walmart Global Tech. E-commerce, supply chain and payments engineering." },
+  { id:8,  company:"Target",               hq:"USA",  city:"Bengaluru", sector:"Retail / CPG",  headcount:4000,  founded:2016, mandate:"Engineering",       desc:"Retail tech, supply chain analytics and enterprise architecture." },
+  { id:9,  company:"Unilever",             hq:"UK",   city:"Bengaluru", sector:"Retail / CPG",  headcount:1800,  founded:2019, mandate:"Digital & Data",    desc:"CDO-led centre for global data, digital marketing analytics and supply optimisation." },
+  { id:10, company:"Siemens",              hq:"Germany", city:"Pune",   sector:"ER&D",          headcount:3200,  founded:2013, mandate:"R&D",               desc:"Embedded systems, IoT and industrial automation R&D. Core product engineering." },
+  { id:11, company:"Bosch",                hq:"Germany", city:"Bengaluru", sector:"ER&D",       headcount:5500,  founded:1997, mandate:"Automotive ER&D",   desc:"One of the oldest and largest ER&D GCCs. Automotive software, AI, sensors." },
+  { id:12, company:"Airbus",               hq:"France", city:"Bengaluru", sector:"ER&D",        headcount:2100,  founded:2006, mandate:"Aerospace R&D",     desc:"Aerospace engineering, simulation, structural analysis and avionics software." },
+  { id:13, company:"Citi",                 hq:"USA",  city:"Pune",      sector:"BFSI",          headcount:12000, founded:2005, mandate:"Operations & Tech", desc:"Largest Citi technology and ops centre globally. Manages core banking and compliance systems." },
+  { id:14, company:"HSBC",                 hq:"UK",   city:"Hyderabad", sector:"BFSI",          headcount:8000,  founded:2003, mandate:"Finance & Ops",     desc:"Global finance operations, regulatory reporting and digital banking platform work." },
+  { id:15, company:"Philips",              hq:"Netherlands", city:"Pune", sector:"Healthcare", headcount:2000,  founded:2012, mandate:"Health Tech R&D",   desc:"Medical device software, imaging AI and patient monitoring systems." },
+  { id:16, company:"Pfizer",               hq:"USA",  city:"Chennai",   sector:"Healthcare",    headcount:1600,  founded:2015, mandate:"Digital & Data",    desc:"Pharma digital, R&D data analytics and clinical trial data management." },
+  { id:17, company:"UnitedHealth Group",   hq:"USA",  city:"Hyderabad", sector:"Healthcare",    headcount:14000, founded:2011, mandate:"Tech & Analytics",  desc:"India's largest healthcare GCC. Optum analytics, health IT and claims processing." },
+  { id:18, company:"Adobe",                hq:"USA",  city:"Noida",     sector:"Technology",    headcount:4000,  founded:2005, mandate:"Product Dev",       desc:"Product engineering for Creative Cloud, Document Cloud and Experience Cloud." },
+  { id:19, company:"SAP",                  hq:"Germany", city:"Bengaluru", sector:"Technology", headcount:12000, founded:1997, mandate:"Product Dev",       desc:"Core SAP product development. One of the first and largest tech GCCs in India." },
+  { id:20, company:"Honeywell",            hq:"USA",  city:"Hyderabad", sector:"ER&D",          headcount:3800,  founded:2009, mandate:"Connected Buildings", desc:"Process automation, building tech and aerospace software engineering." },
+  { id:21, company:"Deutsche Bank",        hq:"Germany", city:"Pune",   sector:"BFSI",          headcount:7500,  founded:2005, mandate:"Tech & Finance",    desc:"Core banking tech, regulatory reporting and global finance operations." },
+  { id:22, company:"Standard Chartered",   hq:"UK",   city:"Chennai",   sector:"BFSI",          headcount:5000,  founded:2008, mandate:"Operations",        desc:"Finance, risk and technology operations centre." },
+  { id:23, company:"Nestlé",               hq:"Switzerland", city:"Hyderabad", sector:"Retail / CPG", headcount:800, founded:2021, mandate:"Digital & Data", desc:"New-gen GCC focused on digital transformation, data analytics and supply chain AI." },
+  { id:24, company:"Michelin",             hq:"France", city:"Chennai", sector:"ER&D",           headcount:1200,  founded:2016, mandate:"Digital & ER&D",    desc:"Tyre engineering simulation, digital factory and connected mobility software." },
+  { id:25, company:"ABB",                  hq:"Switzerland", city:"Bengaluru", sector:"ER&D",   headcount:2800,  founded:2010, mandate:"Automation R&D",    desc:"Industrial automation, robotics and electrification R&D." },
+  { id:26, company:"3M",                   hq:"USA",  city:"Bengaluru", sector:"ER&D",           headcount:1500,  founded:2014, mandate:"Science & Eng",     desc:"Materials science, manufacturing R&D and enterprise tech." },
+  { id:27, company:"Visa",                 hq:"USA",  city:"Bengaluru", sector:"BFSI",           headcount:3000,  founded:2011, mandate:"Payments Tech",     desc:"Core payments infrastructure, fraud detection AI and developer platforms." },
+  { id:28, company:"Mastercard",           hq:"USA",  city:"Pune",      sector:"BFSI",           headcount:2500,  founded:2013, mandate:"Payments Tech",     desc:"Cyber intelligence, data analytics and new payments product engineering." },
+  { id:29, company:"ExxonMobil",           hq:"USA",  city:"Bengaluru", sector:"ER&D",           headcount:1800,  founded:2020, mandate:"Digital & Data",    desc:"Digital transformation, data science and process engineering for global ops." },
+  { id:30, company:"BP",                   hq:"UK",   city:"Pune",      sector:"ER&D",           headcount:2000,  founded:2019, mandate:"Tech & Analytics",  desc:"Energy transition analytics, trading systems and digital engineering." },
+
+  // --- Additional entries for depth ---
+  { id:31, company:"Cognizant (Captive)",  hq:"USA",  city:"Chennai",    sector:"Technology",    headcount:6000,  founded:1994, mandate:"IT Services",       desc:"Original offshore delivery centre, now running product and digital work." },
+  { id:32, company:"Wells Fargo",          hq:"USA",  city:"Hyderabad",  sector:"BFSI",          headcount:12000, founded:2006, mandate:"Tech & Ops",        desc:"Core banking, mortgage and financial analytics centre." },
+  { id:33, company:"Bank of America",      hq:"USA",  city:"Hyderabad",  sector:"BFSI",          headcount:8000,  founded:2005, mandate:"Tech & Finance",    desc:"Enterprise tech, risk and compliance systems." },
+  { id:34, company:"Morgan Stanley",       hq:"USA",  city:"Mumbai",     sector:"BFSI",          headcount:4000,  founded:2007, mandate:"Technology",        desc:"Wealth management tech, trading platforms and data engineering." },
+  { id:35, company:"Intel",                hq:"USA",  city:"Bengaluru",  sector:"Technology",    headcount:6000,  founded:1988, mandate:"Chip Design & AI",  desc:"India's first MNC R&D lab. Chip architecture, AI platforms and compiler engineering." },
+  { id:36, company:"Qualcomm",             hq:"USA",  city:"Hyderabad",  sector:"Technology",    headcount:3500,  founded:2002, mandate:"Chip Design",       desc:"Semiconductor design, modem engineering and 5G platform development." },
+  { id:37, company:"Texas Instruments",    hq:"USA",  city:"Bengaluru",  sector:"Technology",    headcount:4500,  founded:1985, mandate:"Chip Design",       desc:"Analogue and embedded processing chip design. One of India's oldest GCCs." },
+  { id:38, company:"Novartis",             hq:"Switzerland", city:"Hyderabad", sector:"Healthcare", headcount:2000, founded:2018, mandate:"Data Science",     desc:"AI-driven drug discovery, genomics data and clinical analytics." },
+  { id:39, company:"AstraZeneca",          hq:"UK",   city:"Bengaluru",  sector:"Healthcare",    headcount:1400,  founded:2019, mandate:"Data & Digital",    desc:"Bioinformatics, clinical data and digital health platform engineering." },
+  { id:40, company:"Thermo Fisher",        hq:"USA",  city:"Bengaluru",  sector:"Healthcare",    headcount:1200,  founded:2021, mandate:"Digital & ER&D",    desc:"Lab informatics, instrument software and regulatory data systems." },
+  { id:41, company:"PayPal",               hq:"USA",  city:"Chennai",    sector:"BFSI",          headcount:2800,  founded:2010, mandate:"Payments & Risk",   desc:"Fraud detection, risk engineering and global payments platform development." },
+  { id:42, company:"eBay",                 hq:"USA",  city:"Bengaluru",  sector:"Retail / CPG",  headcount:2000,  founded:2005, mandate:"Platform Eng",      desc:"Marketplace platform engineering, search and AI recommendations." },
+  { id:43, company:"Caterpillar",          hq:"USA",  city:"Bengaluru",  sector:"ER&D",          headcount:1600,  founded:2015, mandate:"Machinery ER&D",    desc:"Mining and construction equipment software, IoT and predictive maintenance." },
+  { id:44, company:"GE Aerospace",         hq:"USA",  city:"Hyderabad",  sector:"ER&D",          headcount:3000,  founded:2000, mandate:"Aerospace Eng",     desc:"Jet engine software, digital twins and aviation data analytics." },
+  { id:45, company:"Rolls-Royce",          hq:"UK",   city:"Bengaluru",  sector:"ER&D",          headcount:1800,  founded:2012, mandate:"Aerospace ER&D",    desc:"Propulsion systems engineering, simulation and connected engine data." },
+  { id:46, company:"Zurich Insurance",     hq:"Switzerland", city:"Bengaluru", sector:"BFSI",    headcount:2000,  founded:2020, mandate:"Data & Tech",        desc:"InsurTech, actuarial analytics and global claims processing." },
+  { id:47, company:"Allianz",              hq:"Germany", city:"Pune",    sector:"BFSI",          headcount:1500,  founded:2019, mandate:"Digital & Ops",     desc:"Insurance digital transformation and operations analytics centre." },
+  { id:48, company:"Procter & Gamble",     hq:"USA",  city:"Bengaluru",  sector:"Retail / CPG",  headcount:1200,  founded:2020, mandate:"Digital & Data",    desc:"Supply chain optimisation, digital marketing and consumer analytics." },
+  { id:49, company:"Colgate-Palmolive",    hq:"USA",  city:"Mumbai",     sector:"Retail / CPG",  headcount:600,   founded:2022, mandate:"Digital & Analytics", desc:"New GCC focused on DTC digital, e-commerce analytics and supply chain AI." },
+  { id:50, company:"Pepsico",              hq:"USA",  city:"Hyderabad",  sector:"Retail / CPG",  headcount:900,   founded:2021, mandate:"Tech & Data",       desc:"Digital transformation, supply chain analytics and global shared services." },
+
+  // Tier-2 cities
+  { id:51, company:"KPMG Global Services", hq:"UK",   city:"Ahmedabad",  sector:"BFSI",          headcount:1800,  founded:2018, mandate:"Advisory & Tech",   desc:"Audit technology, data analytics and ESG reporting services." },
+  { id:52, company:"Cognizant",            hq:"USA",  city:"Coimbatore", sector:"Technology",    headcount:800,   founded:2022, mandate:"IT Operations",     desc:"Tier-2 expansion hub for application maintenance and cloud migrations." },
+  { id:53, company:"Infosys BPM",          hq:"India", city:"Indore",    sector:"Technology",    headcount:3000,  founded:2016, mandate:"BPO/BPM",           desc:"Business process outsourcing and digital operations for global clients." },
+  { id:54, company:"UST Global",           hq:"USA",  city:"Kochi",      sector:"Technology",    headcount:4000,  founded:2000, mandate:"Engineering",       desc:"Digital engineering, cloud and ERP services. One of Kochi's anchor tech employers." },
+  { id:55, company:"IBS Software",         hq:"India", city:"Kochi",     sector:"Technology",    headcount:2500,  founded:1997, mandate:"Aviation Software",  desc:"Mission-critical software for aviation, hospitality and energy sectors." },
+
+  // More tech
+  { id:56, company:"Cisco",               hq:"USA",  city:"Bengaluru",   sector:"Technology",   headcount:8000,  founded:1995, mandate:"Networking R&D",    desc:"One of India's largest networking R&D centres. Enterprise software and security products." },
+  { id:57, company:"VMware",              hq:"USA",  city:"Bengaluru",   sector:"Technology",   headcount:4500,  founded:2003, mandate:"Cloud Platform",    desc:"VMware's largest engineering centre. Cloud-native infrastructure and virtualisation." },
+  { id:58, company:"Oracle",              hq:"USA",  city:"Hyderabad",   sector:"Technology",   headcount:6000,  founded:1993, mandate:"Database & Cloud",  desc:"Core Oracle DB, cloud infrastructure and enterprise applications engineering." },
+  { id:59, company:"IBM",                 hq:"USA",  city:"Bengaluru",   sector:"Technology",   headcount:10000, founded:1992, mandate:"AI & Consulting",   desc:"Watson AI, hybrid cloud and enterprise consulting platform development." },
+  { id:60, company:"Accenture (captive)", hq:"Ireland", city:"Bengaluru", sector:"Technology",  headcount:8000,  founded:2001, mandate:"Tech Delivery",     desc:"Accenture's India technology delivery and innovation centres." },
+
+  // BFSI deep
+  { id:61, company:"American Express",    hq:"USA",  city:"Gurugram",    sector:"BFSI",         headcount:9000,  founded:1994, mandate:"Tech & Ops",        desc:"One of India's oldest BFSI GCCs. Global tech, risk, marketing analytics and customer ops." },
+  { id:62, company:"Barclays",            hq:"UK",   city:"Pune",        sector:"BFSI",         headcount:6000,  founded:2005, mandate:"Tech & Risk",       desc:"Core banking tech, investment banking operations and regulatory compliance." },
+  { id:63, company:"UBS",                 hq:"Switzerland", city:"Hyderabad", sector:"BFSI",   headcount:5000,  founded:2006, mandate:"Finance Ops",       desc:"Wealth management operations, risk analytics and trade support." },
+  { id:64, company:"Credit Suisse (UBS)", hq:"Switzerland", city:"Pune",  sector:"BFSI",        headcount:3000,  founded:2004, mandate:"Tech & Finance",    desc:"Post-merger UBS integration. Finance operations and tech support centre." },
+  { id:65, company:"BNY Mellon",          hq:"USA",  city:"Pune",        sector:"BFSI",         headcount:5000,  founded:2007, mandate:"Custody & Tech",    desc:"Custody operations, asset servicing technology and data management." },
+
+  // Healthcare
+  { id:66, company:"Abbott",              hq:"USA",  city:"Pune",        sector:"Healthcare",   headcount:1800,  founded:2014, mandate:"Tech & R&D",        desc:"Medical device software, regulatory data and diagnostics analytics." },
+  { id:67, company:"Medtronic",           hq:"USA",  city:"Hyderabad",   sector:"Healthcare",   headcount:1600,  founded:2015, mandate:"Device Eng",        desc:"Cardiac and neuromodulation device software engineering." },
+  { id:68, company:"Johnson & Johnson",   hq:"USA",  city:"Bengaluru",   sector:"Healthcare",   headcount:2200,  founded:2017, mandate:"Digital & Data",    desc:"Digital surgery, MedTech AI and pharmaceutical data science." },
+  { id:69, company:"Becton Dickinson",    hq:"USA",  city:"Bengaluru",   sector:"Healthcare",   headcount:1000,  founded:2019, mandate:"Connected Health",   desc:"IVD platform software, data analytics and supply chain tech." },
+  { id:70, company:"Roche",               hq:"Switzerland", city:"Pune",  sector:"Healthcare",  headcount:2000,  founded:2016, mandate:"Data Science",      desc:"Genomics data engineering, clinical analytics and AI drug discovery." },
+
+  // ER&D
+  { id:71, company:"Daimler",             hq:"Germany", city:"Bengaluru", sector:"ER&D",        headcount:4000,  founded:2010, mandate:"Automotive ER&D",   desc:"Vehicle software, autonomous driving and connected mobility engineering." },
+  { id:72, company:"Continental",         hq:"Germany", city:"Bengaluru", sector:"ER&D",        headcount:3500,  founded:2008, mandate:"Automotive Tech",   desc:"ADAS systems, tyre sensors and vehicle dynamics software." },
+  { id:73, company:"ZF Friedrichshafen",  hq:"Germany", city:"Chennai",   sector:"ER&D",        headcount:1500,  founded:2017, mandate:"Transmission Eng",  desc:"Electric vehicle drivetrain software and transmission systems engineering." },
+  { id:74, company:"Tata Technologies",   hq:"India",city:"Pune",        sector:"ER&D",         headcount:6000,  founded:2000, mandate:"Automotive ER&D",   desc:"Product engineering for global automotive and aerospace OEMs." },
+  { id:75, company:"Emerson Electric",    hq:"USA",  city:"Pune",        sector:"ER&D",         headcount:2000,  founded:2011, mandate:"Process Automation", desc:"Process control, IoT and industrial automation software engineering." },
+
+  // New/emerging GCCs
+  { id:76,  company:"Stripe",             hq:"USA",  city:"Bengaluru",   sector:"BFSI",         headcount:600,   founded:2022, mandate:"Payments Infra",    desc:"New GCC focused on payments infrastructure and developer experience engineering." },
+  { id:77,  company:"Revolut",            hq:"UK",   city:"Bengaluru",   sector:"BFSI",         headcount:800,   founded:2023, mandate:"Fintech Eng",       desc:"Neobank engineering, compliance automation and growth analytics." },
+  { id:78,  company:"Delivery Hero",      hq:"Germany", city:"Hyderabad", sector:"Retail / CPG", headcount:500,  founded:2022, mandate:"Platform Eng",      desc:"Food delivery platform engineering and data science." },
+  { id:79,  company:"Enphase Energy",     hq:"USA",  city:"Bengaluru",   sector:"ER&D",         headcount:400,   founded:2023, mandate:"Clean Energy R&D",  desc:"Solar microinverter firmware and energy storage software engineering." },
+  { id:80,  company:"Anthropic",          hq:"USA",  city:"Bengaluru",   sector:"Technology",   headcount:200,   founded:2024, mandate:"AI Research",       desc:"Safety-focused AI research and infrastructure engineering." },
+  { id:81,  company:"Canva",              hq:"Australia", city:"Bengaluru", sector:"Technology", headcount:350,  founded:2023, mandate:"Product Dev",       desc:"Product engineering, growth and design platform development." },
+  { id:82,  company:"Shopify",            hq:"Canada", city:"Hyderabad",  sector:"Technology",  headcount:300,   founded:2022, mandate:"Commerce Infra",    desc:"Merchant platform engineering and payments infrastructure." },
+  { id:83,  company:"Atlassian",          hq:"Australia", city:"Bengaluru", sector:"Technology", headcount:1200, founded:2021, mandate:"Product Dev",       desc:"Jira, Confluence and Trello engineering. Cloud migration platform work." },
+  { id:84,  company:"Datadog",            hq:"USA",  city:"Hyderabad",   sector:"Technology",   headcount:400,   founded:2023, mandate:"Observability Eng", desc:"Cloud observability platform engineering and ML-based alerting systems." },
+  { id:85,  company:"Snowflake",          hq:"USA",  city:"Bengaluru",   sector:"Technology",   headcount:350,   founded:2022, mandate:"Data Cloud Eng",    desc:"Data cloud platform, SQL engine and data sharing infrastructure." },
+  { id:86,  company:"Palantir",           hq:"USA",  city:"Chennai",     sector:"Technology",   headcount:600,   founded:2021, mandate:"AI Platform",       desc:"Foundry and AIP platform engineering for enterprise AI deployments." },
+  { id:87,  company:"ServiceNow",         hq:"USA",  city:"Hyderabad",   sector:"Technology",   headcount:2000,  founded:2019, mandate:"Platform Dev",      desc:"Now Platform engineering, AI workflow automation and ITSM product development." },
+  { id:88,  company:"Splunk",             hq:"USA",  city:"Bengaluru",   sector:"Technology",   headcount:800,   founded:2020, mandate:"Security Eng",      desc:"SIEM platform engineering, threat intelligence and data pipeline work." },
+  { id:89,  company:"Palo Alto Networks", hq:"USA",  city:"Bengaluru",   sector:"Technology",   headcount:1500,  founded:2019, mandate:"Cybersecurity R&D", desc:"Prisma Cloud, XSIAM and next-gen firewall engineering." },
+  { id:90,  company:"CrowdStrike",        hq:"USA",  city:"Pune",        sector:"Technology",   headcount:700,   founded:2021, mandate:"Cyber Intelligence", desc:"Threat intelligence, EDR platform engineering and ML-based detection systems." },
+  { id:91,  company:"Workday",            hq:"USA",  city:"Bengaluru",   sector:"Technology",   headcount:1800,  founded:2018, mandate:"HCM Platform",      desc:"HCM and financial management platform engineering and ML personalisation." },
+  { id:92,  company:"Salesforce",         hq:"USA",  city:"Hyderabad",   sector:"Technology",   headcount:3000,  founded:2016, mandate:"CRM Platform",      desc:"Einstein AI, Commerce Cloud and Slack platform engineering." },
+  { id:93,  company:"Uber",               hq:"USA",  city:"Hyderabad",   sector:"Technology",   headcount:1000,  founded:2015, mandate:"Platform Eng",      desc:"Maps, pricing algorithms and marketplace platform engineering." },
+  { id:94,  company:"Airbnb",             hq:"USA",  city:"Bengaluru",   sector:"Technology",   headcount:400,   founded:2021, mandate:"Platform Dev",      desc:"Trust & Safety engineering, payments and host experience platform." },
+  { id:95,  company:"LinkedIn",           hq:"USA",  city:"Bengaluru",   sector:"Technology",   headcount:1200,  founded:2011, mandate:"Product Dev",       desc:"Feed algorithms, talent solutions and economic graph data engineering." },
+  { id:96,  company:"Twitter/X",          hq:"USA",  city:"Delhi-NCR",   sector:"Technology",   headcount:300,   founded:2012, mandate:"Eng & Trust",       desc:"Platform engineering and content trust & safety operations." },
+  { id:97,  company:"Spotify",            hq:"Sweden", city:"Bengaluru",  sector:"Technology",  headcount:600,   founded:2021, mandate:"Audio Platform",    desc:"Audio processing, recommendation ML and creator platform engineering." },
+  { id:98,  company:"Netflix",            hq:"USA",  city:"Bengaluru",   sector:"Technology",   headcount:500,   founded:2022, mandate:"Platform Eng",      desc:"Content delivery, recommendation systems and device engineering." },
+  { id:99,  company:"Rakuten",            hq:"Japan", city:"Bengaluru",  sector:"Retail / CPG", headcount:1200,  founded:2013, mandate:"Platform Dev",      desc:"E-commerce, fintech and digital media platform engineering." },
+  { id:100, company:"LG Electronics",     hq:"South Korea", city:"Bengaluru", sector:"ER&D",   headcount:2000,  founded:2006, mandate:"Consumer Tech R&D",  desc:"Home appliance software, webOS platform and AI engineering." },
+  { id:101, company:"Samsung R&D",        hq:"South Korea", city:"Bengaluru", sector:"Technology", headcount:3000, founded:2006, mandate:"Mobile & AI",     desc:"Flagship Samsung mobile software, Bixby AI and semiconductor algorithms." },
+  { id:102, company:"Sony India Software", hq:"Japan", city:"Bengaluru", sector:"Technology",   headcount:1500,  founded:2003, mandate:"Consumer Tech",     desc:"PlayStation, camera and audio electronics software engineering." },
+  { id:103, company:"Hitachi Digital",    hq:"Japan", city:"Pune",       sector:"Technology",   headcount:2000,  founded:2014, mandate:"Digital & ER&D",    desc:"Lumada digital transformation platform and industrial IoT engineering." },
+  { id:104, company:"Société Générale",   hq:"France", city:"Bengaluru", sector:"BFSI",         headcount:4000,  founded:2011, mandate:"Tech & Markets",    desc:"Capital markets technology, risk systems and data engineering." },
+  { id:105, company:"BNP Paribas",        hq:"France", city:"Bengaluru", sector:"BFSI",         headcount:5000,  founded:2008, mandate:"CIB Tech",          desc:"Corporate and institutional banking technology and operations." },
+  { id:106, company:"Crédit Agricole",    hq:"France", city:"Chennai",   sector:"BFSI",         headcount:1800,  founded:2017, mandate:"Finance Ops",       desc:"Shared services for European banking operations and compliance tech." },
+  { id:107, company:"ING Group",          hq:"Netherlands", city:"Hyderabad", sector:"BFSI",    headcount:2500,  founded:2015, mandate:"Digital Banking",   desc:"Retail banking platform, open banking APIs and risk analytics." },
+  { id:108, company:"Amadeus",            hq:"Spain", city:"Bengaluru",  sector:"Technology",   headcount:3000,  founded:2008, mandate:"Travel Tech",       desc:"Airline reservations systems, GDS platform and hotel tech engineering." },
+  { id:109, company:"Sabre",              hq:"USA",  city:"Bengaluru",   sector:"Technology",   headcount:1800,  founded:2007, mandate:"Travel Tech",       desc:"GDS platform engineering, airline retailing and NDC implementation." },
+  { id:110, company:"Expedia",            hq:"USA",  city:"Gurugram",    sector:"Technology",   headcount:1000,  founded:2019, mandate:"Platform Dev",      desc:"OTA platform engineering, pricing algorithms and supply connectivity." },
+  { id:111, company:"Marriott International", hq:"USA", city:"Pune",     sector:"Retail / CPG", headcount:700,  founded:2021, mandate:"Digital & Tech",    desc:"Property management systems, loyalty platform and revenue management tech." },
+  { id:112, company:"Hilton",             hq:"USA",  city:"Bengaluru",   sector:"Retail / CPG", headcount:500,  founded:2022, mandate:"Digital & Ops",     desc:"Digital platform, Hilton Honors and revenue management engineering." },
+  { id:113, company:"GE HealthCare",      hq:"USA",  city:"Bengaluru",   sector:"Healthcare",   headcount:4000,  founded:2001, mandate:"MedTech R&D",       desc:"Imaging AI, patient monitoring and healthcare IT platform engineering." },
+  { id:114, company:"Stryker",            hq:"USA",  city:"Hyderabad",   sector:"Healthcare",   headcount:1200,  founded:2020, mandate:"Digital Health",    desc:"Surgical robotics software, data analytics and hospital systems tech." },
+  { id:115, company:"Zimmer Biomet",      hq:"USA",  city:"Bengaluru",   sector:"Healthcare",   headcount:800,   founded:2021, mandate:"Digital & ER&D",    desc:"Orthopaedic device software and digital surgery platforms." },
+  { id:116, company:"IQVIA",              hq:"USA",  city:"Mumbai",      sector:"Healthcare",   headcount:3000,  founded:2012, mandate:"Data & Analytics",  desc:"Clinical data management, REMS analytics and life sciences intelligence." },
+  { id:117, company:"Icon Plc",           hq:"Ireland", city:"Chennai",  sector:"Healthcare",   headcount:1500,  founded:2014, mandate:"Clinical Data",     desc:"Clinical trials data management, biostatistics and regulatory submissions." },
+  { id:118, company:"Trane Technologies", hq:"Ireland", city:"Bengaluru", sector:"ER&D",        headcount:1200,  founded:2016, mandate:"HVAC ER&D",         desc:"Climate control systems software, connected buildings and energy optimisation." },
+  { id:119, company:"Eaton",              hq:"Ireland", city:"Pune",     sector:"ER&D",         headcount:2200,  founded:2008, mandate:"Power Mgmt ER&D",   desc:"Electrical and industrial power management systems engineering." },
+  { id:120, company:"Parker Hannifin",    hq:"USA",  city:"Hyderabad",   sector:"ER&D",         headcount:1000,  founded:2017, mandate:"Motion Eng",        desc:"Motion and control technologies for aerospace and industrial markets." },
+  { id:121, company:"Trimble",            hq:"USA",  city:"Hyderabad",   sector:"Technology",   headcount:1400,  founded:2015, mandate:"Positioning Tech",  desc:"Geospatial data, construction tech and connected agriculture software." },
+  { id:122, company:"Bentley Systems",    hq:"USA",  city:"Hyderabad",   sector:"Technology",   headcount:2000,  founded:2013, mandate:"Infra Software",    desc:"Infrastructure engineering software for roads, bridges and utilities." },
+  { id:123, company:"Hexagon",            hq:"Sweden", city:"Hyderabad", sector:"Technology",   headcount:1800,  founded:2010, mandate:"Metrology & GIS",   desc:"Geospatial intelligence, manufacturing intelligence and autonomous platforms." },
+  { id:124, company:"AVEVA",              hq:"UK",   city:"Hyderabad",   sector:"Technology",   headcount:1200,  founded:2012, mandate:"Industrial SW",     desc:"Industrial software for oil, gas, mining and power plant operations." },
+  { id:125, company:"Dun & Bradstreet",   hq:"USA",  city:"Bengaluru",   sector:"BFSI",         headcount:2000,  founded:2015, mandate:"Data & Analytics",  desc:"Business data, risk analytics and commercial credit intelligence platform." },
+  { id:126, company:"Moody's Analytics",  hq:"USA",  city:"Bengaluru",   sector:"BFSI",         headcount:1200,  founded:2016, mandate:"Risk & Data",       desc:"Credit risk models, regulatory compliance analytics and financial data." },
+  { id:127, company:"S&P Global",         hq:"USA",  city:"Hyderabad",   sector:"BFSI",         headcount:3500,  founded:2009, mandate:"Financial Data",    desc:"Market intelligence, ratings analytics and commodity data platforms." },
+  { id:128, company:"MSCI",               hq:"USA",  city:"Mumbai",      sector:"BFSI",         headcount:800,   founded:2017, mandate:"Index & Analytics", desc:"Equity indexes, ESG analytics and risk management platform engineering." },
+  { id:129, company:"Refinitiv (LSEG)",   hq:"UK",   city:"Bengaluru",   sector:"BFSI",         headcount:2500,  founded:2008, mandate:"Financial Data",    desc:"Financial data feeds, trading platforms and regulatory reporting analytics." },
+  { id:130, company:"FactSet",            hq:"USA",  city:"Hyderabad",   sector:"BFSI",         headcount:1000,  founded:2015, mandate:"Financial Data",    desc:"Investment management data, portfolio analytics and financial content." },
+  { id:131, company:"Morningstar",        hq:"USA",  city:"Mumbai",      sector:"BFSI",         headcount:600,   founded:2017, mandate:"Investment Data",   desc:"Fund ratings, ESG research and investment data platform engineering." },
+  { id:132, company:"Gartner",            hq:"USA",  city:"Gurugram",    sector:"Technology",   headcount:1400,  founded:2003, mandate:"Research & Ops",    desc:"Research production, data analytics and global operations support." },
+  { id:133, company:"Nielsen",            hq:"USA",  city:"Bengaluru",   sector:"Retail / CPG", headcount:2000,  founded:2006, mandate:"Data & Analytics",  desc:"Consumer measurement, media analytics and retail data intelligence." },
+  { id:134, company:"Kantar",             hq:"UK",   city:"Hyderabad",   sector:"Retail / CPG", headcount:1500,  founded:2012, mandate:"Analytics",         desc:"Consumer insights, brand tracking and marketing analytics." },
+  { id:135, company:"Wood Mackenzie",     hq:"UK",   city:"Gurugram",    sector:"ER&D",         headcount:500,   founded:2019, mandate:"Energy Analytics",  desc:"Upstream energy data, market forecasting and energy transition analytics." },
+  { id:136, company:"Fractal Analytics",  hq:"India", city:"Bengaluru",  sector:"Technology",   headcount:4000,  founded:2000, mandate:"AI & Analytics",    desc:"AI and analytics for CPG, insurance and healthcare clients globally." },
+  { id:137, company:"Mphasis (DXC)",      hq:"India", city:"Bengaluru",  sector:"Technology",   headcount:5000,  founded:2000, mandate:"IT Services",       desc:"Banking and insurance IT services with DXC as controlling shareholder." },
+  { id:138, company:"Zendesk",            hq:"USA",  city:"Bengaluru",   sector:"Technology",   headcount:700,   founded:2020, mandate:"CX Platform",       desc:"Customer service platform engineering and AI automation tools." },
+  { id:139, company:"HubSpot",            hq:"USA",  city:"Bengaluru",   sector:"Technology",   headcount:500,   founded:2022, mandate:"Platform Dev",      desc:"CRM, marketing and sales platform engineering." },
+  { id:140, company:"Twilio",             hq:"USA",  city:"Bengaluru",   sector:"Technology",   headcount:600,   founded:2021, mandate:"Comms Platform",    desc:"Communications APIs, messaging infrastructure and data platform engineering." },
+  { id:141, company:"Okta",               hq:"USA",  city:"Bengaluru",   sector:"Technology",   headcount:400,   founded:2022, mandate:"Identity Eng",      desc:"Identity and access management platform engineering." },
+  { id:142, company:"Veeva Systems",      hq:"USA",  city:"Pune",        sector:"Healthcare",   headcount:1200,  founded:2020, mandate:"Life Sciences SW",  desc:"Veeva Vault and CRM platform engineering for global pharma clients." }
+];
+
+const CITY_DATA = [
+  {
+    name: "Bengaluru", state: "Karnataka", tag: "Tech Capital",
+    gccs: 900, share: 37, tagColor: "#6366f1",
+    overall: 91,
+    dims: [
+      { name: "Talent Depth",  val: 97, color: "#6366f1" },
+      { name: "Infra Quality", val: 88, color: "#818cf8" },
+      { name: "Cost Index",    val: 62, color: "#f59e0b" },
+      { name: "State Policy",  val: 94, color: "#10b981" },
+      { name: "Ecosystem",     val: 98, color: "#14b8a6" }
+    ],
+    details: { rent: "₹95–130/sqft/mo", avgCTC: "$22–28k/yr", attrition: "18–22%", topSectors: "Tech, ER&D, BFSI", incentive: "50% stipend subsidy, IP grants, 40% innovation lab funding" }
+  },
+  {
+    name: "Hyderabad", state: "Telangana", tag: "Healthcare Hub",
+    gccs: 520, share: 22, tagColor: "#10b981",
+    overall: 87,
+    dims: [
+      { name: "Talent Depth",  val: 88, color: "#6366f1" },
+      { name: "Infra Quality", val: 92, color: "#818cf8" },
+      { name: "Cost Index",    val: 73, color: "#f59e0b" },
+      { name: "State Policy",  val: 90, color: "#10b981" },
+      { name: "Ecosystem",     val: 85, color: "#14b8a6" }
+    ],
+    details: { rent: "₹75–110/sqft/mo", avgCTC: "$18–24k/yr", attrition: "15–19%", topSectors: "Healthcare, Tech, BFSI", incentive: "Land cost subsidy 50%, electricity exemptions, strong data centre policy" }
+  },
+  {
+    name: "Chennai", state: "Tamil Nadu", tag: "ER&D + BFSI",
+    gccs: 260, share: 11, tagColor: "#f59e0b",
+    overall: 79,
+    dims: [
+      { name: "Talent Depth",  val: 82, color: "#6366f1" },
+      { name: "Infra Quality", val: 80, color: "#818cf8" },
+      { name: "Cost Index",    val: 78, color: "#f59e0b" },
+      { name: "State Policy",  val: 75, color: "#10b981" },
+      { name: "Ecosystem",     val: 77, color: "#14b8a6" }
+    ],
+    details: { rent: "₹70–95/sqft/mo", avgCTC: "$16–22k/yr", attrition: "12–16%", topSectors: "ER&D, Automotive, BFSI", incentive: "Employee-level incentives, SIPCOT parks, Tamil Nadu Startup Policy" }
+  },
+  {
+    name: "Pune", state: "Maharashtra", tag: "Automotive ER&D",
+    gccs: 230, share: 10, tagColor: "#14b8a6",
+    overall: 77,
+    dims: [
+      { name: "Talent Depth",  val: 78, color: "#6366f1" },
+      { name: "Infra Quality", val: 82, color: "#818cf8" },
+      { name: "Cost Index",    val: 74, color: "#f59e0b" },
+      { name: "State Policy",  val: 80, color: "#10b981" },
+      { name: "Ecosystem",     val: 72, color: "#14b8a6" }
+    ],
+    details: { rent: "₹65–90/sqft/mo", avgCTC: "$15–20k/yr", attrition: "13–17%", topSectors: "ER&D, BFSI, Manufacturing", incentive: "Maharashtra 2025 GCC policy, MIDC parks, streamlined tax structure" }
+  },
+  {
+    name: "Delhi-NCR", state: "Haryana/UP", tag: "BFSI + Retail",
+    gccs: 180, share: 8, tagColor: "#f87171",
+    overall: 73,
+    dims: [
+      { name: "Talent Depth",  val: 80, color: "#6366f1" },
+      { name: "Infra Quality", val: 75, color: "#818cf8" },
+      { name: "Cost Index",    val: 58, color: "#f59e0b" },
+      { name: "State Policy",  val: 68, color: "#10b981" },
+      { name: "Ecosystem",     val: 70, color: "#14b8a6" }
+    ],
+    details: { rent: "₹90–120/sqft/mo", avgCTC: "$18–25k/yr", attrition: "20–26%", topSectors: "BFSI, Retail, Technology", incentive: "Haryana GCC Policy 2026, UP GCC policy, fast-track IEC" }
+  },
+  {
+    name: "Mumbai", state: "Maharashtra", tag: "BFSI Capital",
+    gccs: 130, share: 6, tagColor: "#a78bfa",
+    overall: 70,
+    dims: [
+      { name: "Talent Depth",  val: 80, color: "#6366f1" },
+      { name: "Infra Quality", val: 78, color: "#818cf8" },
+      { name: "Cost Index",    val: 42, color: "#f59e0b" },
+      { name: "State Policy",  val: 78, color: "#10b981" },
+      { name: "Ecosystem",     val: 68, color: "#14b8a6" }
+    ],
+    details: { rent: "₹130–185/sqft/mo", avgCTC: "$22–30k/yr", attrition: "20–25%", topSectors: "BFSI, Healthcare, Media", incentive: "Maharashtra GCC framework, BKC regulatory fast-track, SEEPZ for tech" }
+  },
+  {
+    name: "Ahmedabad", state: "Gujarat", tag: "Emerging Hub",
+    gccs: 55, share: 2, tagColor: "#6ee7b7",
+    overall: 60,
+    dims: [
+      { name: "Talent Depth",  val: 55, color: "#6366f1" },
+      { name: "Infra Quality", val: 68, color: "#818cf8" },
+      { name: "Cost Index",    val: 88, color: "#f59e0b" },
+      { name: "State Policy",  val: 74, color: "#10b981" },
+      { name: "Ecosystem",     val: 48, color: "#14b8a6" }
+    ],
+    details: { rent: "₹45–65/sqft/mo", avgCTC: "$10–15k/yr", attrition: "9–13%", topSectors: "BFSI, Technology", incentive: "Gujarat GCC Policy 2024, GIFT City SEZ, 250+ GCC target" }
+  },
+  {
+    name: "Kochi", state: "Kerala", tag: "Tech + Back-Office",
+    gccs: 40, share: 2, tagColor: "#67e8f9",
+    overall: 57,
+    dims: [
+      { name: "Talent Depth",  val: 58, color: "#6366f1" },
+      { name: "Infra Quality", val: 65, color: "#818cf8" },
+      { name: "Cost Index",    val: 90, color: "#f59e0b" },
+      { name: "State Policy",  val: 62, color: "#10b981" },
+      { name: "Ecosystem",     val: 50, color: "#14b8a6" }
+    ],
+    details: { rent: "₹40–60/sqft/mo", avgCTC: "$9–14k/yr", attrition: "8–12%", topSectors: "Technology, Healthcare", incentive: "Kerala draft GCC policy in progress, Infopark SEZ, Smart City projects" }
+  },
+  {
+    name: "Coimbatore", state: "Tamil Nadu", tag: "Manufacturing Tech",
+    gccs: 30, share: 1, tagColor: "#fde68a",
+    overall: 52,
+    dims: [
+      { name: "Talent Depth",  val: 48, color: "#6366f1" },
+      { name: "Infra Quality", val: 55, color: "#818cf8" },
+      { name: "Cost Index",    val: 93, color: "#f59e0b" },
+      { name: "State Policy",  val: 60, color: "#10b981" },
+      { name: "Ecosystem",     val: 42, color: "#14b8a6" }
+    ],
+    details: { rent: "₹30–50/sqft/mo", avgCTC: "$8–12k/yr", attrition: "7–11%", topSectors: "ER&D, Manufacturing", incentive: "Tamil Nadu Tier-2 push, TIDCO parks, low land cost" }
+  },
+  {
+    name: "Indore", state: "Madhya Pradesh", tag: "MP's Tech Bet",
+    gccs: 20, share: 1, tagColor: "#c4b5fd",
+    overall: 49,
+    dims: [
+      { name: "Talent Depth",  val: 42, color: "#6366f1" },
+      { name: "Infra Quality", val: 60, color: "#818cf8" },
+      { name: "Cost Index",    val: 95, color: "#f59e0b" },
+      { name: "State Policy",  val: 65, color: "#10b981" },
+      { name: "Ecosystem",     val: 38, color: "#14b8a6" }
+    ],
+    details: { rent: "₹25–40/sqft/mo", avgCTC: "$7–11k/yr", attrition: "7–10%", topSectors: "Technology, BPO", incentive: "MP IT Investment Policy, Super Corridor projects, IIT Indore talent pipeline" }
+  }
+];
+
+const INCENTIVE_DATA = {
+  rows: [
+    "Capital subsidy on plant/equipment",
+    "Land cost incentive / allotment",
+    "Electricity tax exemption",
+    "IP filing reimbursement",
+    "Training / skilling stipend",
+    "Innovation lab co-funding",
+    "Single-window clearance",
+    "Dedicated GCC policy",
+    "Stamp duty exemption",
+    "Tax holiday / SGST reimbursement",
+    "Special economic zone option"
+  ],
+  states: {
+    "Karnataka": ["✓","partial","✓","✓","✓","✓","✓","✓","✓","partial","✓"],
+    "Telangana": ["✓","✓","✓","partial","✓","partial","✓","✓","✓","✓","✓"],
+    "Maharashtra": ["✓","partial","partial","partial","partial","✗","✓","✓","✓","✓","✓"],
+    "Tamil Nadu": ["partial","partial","partial","✗","✓","✗","✓","partial","partial","partial","✓"],
+    "Gujarat": ["✓","✓","partial","partial","partial","✗","✓","✓","✓","✓","✓"],
+    "Haryana": ["partial","partial","✗","✗","partial","✗","partial","✓","partial","partial","partial"],
+    "UP": ["partial","✓","✗","✗","partial","✗","partial","✓","partial","partial","✗"],
+  }
+};
+
+const PROVIDER_DATA = [
+  { name: "ANSR", type: "advisor", icon: "🏛", hq: "Bengaluru", clients: 80, since: 2004, speciality: "Full-stack GCC setup + talent", desc: "The market leader for dedicated GCC setup. Full lifecycle from feasibility to hiring. Founded by ex-GCC leaders.", ratings: { "Speed": 82, "Talent network": 90, "Policy navigation": 85, "Pricing transparency": 62, "Post-setup support": 75 } },
+  { name: "Zinnov", type: "advisor", icon: "📊", hq: "Bengaluru", clients: 150, since: 2002, speciality: "Strategy & research", desc: "Research-heavy advisory. Co-authors the NASSCOM GCC Landscape report. Strong on benchmarking and feasibility studies.", ratings: { "Benchmarks": 95, "Strategic depth": 90, "Execution": 62, "Pricing transparency": 70, "Speed": 60 } },
+  { name: "EY India", type: "advisor", icon: "🏢", hq: "Mumbai", clients: 200, since: 1993, speciality: "Tax, legal, setup", desc: "Big Four coverage with GCC specialisation. Strong for regulated sectors (BFSI, pharma). Expensive but defensible.", ratings: { "Legal/tax depth": 92, "Speed": 65, "Cost": 48, "Sector expertise": 88, "Policy nav": 85 } },
+  { name: "Wisemonk", type: "eor", icon: "🌐", hq: "Bengaluru", clients: 300, since: 2016, speciality: "EOR + GCC transition", desc: "End-to-end EOR to GCC conversion specialist. Built 300+ India teams. Transparent pricing, owns the crossover conversation.", ratings: { "Speed": 90, "Pricing transparency": 88, "GCC transition": 85, "Coverage": 75, "HR compliance": 82 } },
+  { name: "Rippling India", type: "eor", icon: "⚡", hq: "San Francisco", clients: 500, since: 2016, speciality: "EOR + HRIS platform", desc: "Best-in-class HRIS + EOR combo. Very fast hiring. Platform-native with strong compliance automation.", ratings: { "Platform quality": 94, "Speed": 92, "Pricing": 70, "India-specific depth": 68, "GCC advisory": 40 } },
+  { name: "Multiplier", type: "eor", icon: "✕", hq: "Singapore", clients: 600, since: 2020, speciality: "EOR for startups", desc: "Strong for early-stage EOR with fast onboarding. Good India coverage. Less suited for mature GCC builds.", ratings: { "Speed": 88, "Cost": 82, "Platform UX": 85, "Compliance depth": 70, "Enterprise features": 58 } },
+  { name: "JLL India", type: "re", icon: "🏗", hq: "Mumbai", clients: 400, since: 1996, speciality: "GCC RE advisory", desc: "Leads GCC leasing reports. Deep relationships with Grade A landlords in all 6 metros. Strong on transaction value.", ratings: { "Market coverage": 96, "Data quality": 90, "Negotiation": 88, "Unbiased advisory": 65, "Tier-2 coverage": 55 } },
+  { name: "CBRE India", type: "re", icon: "🔷", hq: "Hyderabad", clients: 380, since: 1994, speciality: "Occupier advisory", desc: "Largest occupier advisory desk in India. Strong tech and healthcare sector experience. Good Tier-2 push recently.", ratings: { "Market coverage": 94, "Occupier bias": 80, "Data quality": 88, "Flexibility": 72, "Tier-2 coverage": 65 } }
+];
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let currentSort = { col: null, dir: 1 };
+let filteredData = [...GCC_DATA];
+let searchQuery = '';
+let selectedRow = null;
+
+// ═══════════════════════════════════════════
+// VIEW SWITCHING
+// ═══════════════════════════════════════════
+function switchView(viewName) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + viewName).classList.add('active');
+  event.currentTarget.classList.add('active');
+  closeDetail();
+
+  if (viewName === 'cities') renderCities();
+  if (viewName === 'incentives') renderIncentives();
+  if (viewName === 'providers') renderProviders();
+  if (viewName === 'calculator') updateCalc();
+}
+
+// ═══════════════════════════════════════════
+// REGISTRY
+// ═══════════════════════════════════════════
+function sectorClass(sector) {
+  const map = { "Technology": "tag-sector-tech", "BFSI": "tag-sector-bfsi", "Healthcare": "tag-sector-health", "ER&D": "tag-sector-erd", "Retail / CPG": "tag-sector-retail" };
+  return map[sector] || "tag-sector-tech";
+}
+
+function mandateBadge(headcount) {
+  if (headcount >= 2000) return '<span class="score-pill score-high">Large</span>';
+  if (headcount >= 500)  return '<span class="score-pill score-mid">Mid</span>';
+  return '<span class="score-pill score-low">Small</span>';
+}
+
+function renderTable() {
+  const tbody = document.getElementById('gccTableBody');
+  const banner = document.getElementById('searchBanner');
+
+  if (searchQuery && filteredData.length > 0) {
+    banner.innerHTML = `<span>🔍 Showing ${filteredData.length} result${filteredData.length !== 1 ? 's' : ''} for "<strong>${searchQuery}</strong>"</span><button class="clear-search" onclick="clearSearch()">Clear search</button>`;
+    banner.classList.add('visible');
+  } else if (searchQuery && filteredData.length === 0) {
+    banner.innerHTML = `<span>No results for "<strong>${searchQuery}</strong>"</span><button class="clear-search" onclick="clearSearch()">Clear search</button>`;
+    banner.classList.add('visible');
+  } else {
+    banner.classList.remove('visible');
+  }
+
+  document.getElementById('stat-total').textContent = filteredData.length;
+  document.getElementById('stat-new').textContent = filteredData.filter(r => r.founded >= 2022).length;
+
+  if (filteredData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--dim);">No GCCs match current filters</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filteredData.map(row => `
+    <tr onclick="openDetail(${row.id})" style="cursor:pointer;" id="row-${row.id}">
+      <td>
+        <div class="cell-primary">${row.company}<small>${row.hq}</small></div>
+      </td>
+      <td style="color:var(--muted)">${row.hq}</td>
+      <td>${row.city}</td>
+      <td><span class="tag ${sectorClass(row.sector)}">${row.sector}</span></td>
+      <td style="font-weight:600;">${row.headcount.toLocaleString()}</td>
+      <td style="color:var(--muted)">${row.founded}</td>
+      <td style="color:var(--muted);font-size:0.78rem;">${row.mandate}</td>
+      <td><button class="btn btn-ghost" style="font-size:0.72rem;padding:3px 8px;" onclick="event.stopPropagation();openDetail(${row.id})">View →</button></td>
+    </tr>
+  `).join('');
+}
+
+function openDetail(id) {
+  const gcc = GCC_DATA.find(g => g.id === id);
+  if (!gcc) return;
+
+  if (selectedRow) document.getElementById('row-' + selectedRow)?.classList.remove('selected');
+  selectedRow = id;
+  document.getElementById('row-' + id)?.classList.add('selected');
+
+  document.getElementById('dp-name').textContent = gcc.company;
+  document.getElementById('dp-sub').textContent = gcc.city + ' · ' + gcc.sector;
+
+  const city = CITY_DATA.find(c => c.name === gcc.city) || {};
+  const details = city.details || {};
+
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-section-title">Overview</div>
+      <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;">${gcc.desc}</p>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">GCC Profile</div>
+      <div class="kv-row"><span class="kv-key">HQ Country</span><span class="kv-val">${gcc.hq}</span></div>
+      <div class="kv-row"><span class="kv-key">City</span><span class="kv-val">${gcc.city}</span></div>
+      <div class="kv-row"><span class="kv-key">Sector</span><span class="kv-val">${gcc.sector}</span></div>
+      <div class="kv-row"><span class="kv-key">Headcount</span><span class="kv-val" style="color:var(--accent2)">${gcc.headcount.toLocaleString()}</span></div>
+      <div class="kv-row"><span class="kv-key">Established</span><span class="kv-val">${gcc.founded}</span></div>
+      <div class="kv-row"><span class="kv-key">Vintage</span><span class="kv-val">${2026 - gcc.founded} yrs old</span></div>
+      <div class="kv-row"><span class="kv-key">Primary Mandate</span><span class="kv-val">${gcc.mandate}</span></div>
+      <div class="kv-row"><span class="kv-key">Size tier</span><span class="kv-val">${gcc.headcount >= 2000 ? 'Large (2000+)' : gcc.headcount >= 500 ? 'Mid (500–2000)' : 'Small (<500)'}</span></div>
+    </div>
+    ${details.rent ? `
+    <div class="detail-section">
+      <div class="detail-section-title">City Context — ${gcc.city}</div>
+      <div class="kv-row"><span class="kv-key">Office rent</span><span class="kv-val">${details.rent}</span></div>
+      <div class="kv-row"><span class="kv-key">Avg CTC range</span><span class="kv-val">${details.avgCTC}</span></div>
+      <div class="kv-row"><span class="kv-key">Attrition range</span><span class="kv-val">${details.attrition}</span></div>
+      <div class="kv-row"><span class="kv-key">Top sectors</span><span class="kv-val">${details.topSectors}</span></div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">State Incentives Available</div>
+      <p style="font-size:0.78rem;color:var(--muted);line-height:1.6;">${details.incentive}</p>
+    </div>` : ''}
+  `;
+
+  document.getElementById('detailPanel').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detailPanel').classList.remove('open');
+  if (selectedRow) document.getElementById('row-' + selectedRow)?.classList.remove('selected');
+  selectedRow = null;
+}
+
+function applyFilters() {
+  const city = document.getElementById('filterCity').value;
+  const sector = document.getElementById('filterSector').value;
+  const size = document.getElementById('filterSize').value;
+  const year = document.getElementById('filterYear').value;
+
+  filteredData = GCC_DATA.filter(g => {
+    if (city && g.city !== city) return false;
+    if (sector && g.sector !== sector) return false;
+    if (size === 'small' && g.headcount >= 500) return false;
+    if (size === 'mid' && (g.headcount < 500 || g.headcount >= 2000)) return false;
+    if (size === 'large' && g.headcount < 2000) return false;
+    if (year === 'new' && g.founded < 2023) return false;
+    if (year === 'mid' && (g.founded < 2018 || g.founded > 2022)) return false;
+    if (year === 'old' && g.founded >= 2018) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return g.company.toLowerCase().includes(q) ||
+             g.city.toLowerCase().includes(q) ||
+             g.sector.toLowerCase().includes(q) ||
+             g.hq.toLowerCase().includes(q) ||
+             g.mandate.toLowerCase().includes(q) ||
+             g.desc.toLowerCase().includes(q);
+    }
+    return true;
+  });
+  renderTable();
+}
+
+function clearFilters() {
+  ['filterCity','filterSector','filterSize','filterYear'].forEach(id => document.getElementById(id).value = '');
+  searchQuery = '';
+  document.getElementById('globalSearch').value = '';
+  filteredData = [...GCC_DATA];
+  renderTable();
+}
+
+function clearSearch() {
+  searchQuery = '';
+  document.getElementById('globalSearch').value = '';
+  applyFilters();
+}
+
+function sortTable(col) {
+  if (currentSort.col === col) { currentSort.dir *= -1; } else { currentSort.col = col; currentSort.dir = 1; }
+  filteredData.sort((a, b) => {
+    let av = a[col], bv = b[col];
+    if (typeof av === 'string') return av.localeCompare(bv) * currentSort.dir;
+    return (av - bv) * currentSort.dir;
+  });
+  renderTable();
+}
+
+function exportCSV() {
+  const headers = ['Company','HQ','City','Sector','Headcount','Founded','Mandate'];
+  const rows = filteredData.map(g => [g.company,g.hq,g.city,g.sector,g.headcount,g.founded,g.mandate].map(v => `"${v}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'gcc_intel_export.csv'; a.click();
+}
+
+// ═══════════════════════════════════════════
+// GLOBAL SEARCH
+// ═══════════════════════════════════════════
+document.getElementById('globalSearch').addEventListener('input', function(e) {
+  searchQuery = e.target.value.trim();
+
+  // Auto-switch to registry if not already there
+  const registryView = document.getElementById('view-registry');
+  if (!registryView.classList.contains('active')) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    registryView.classList.add('active');
+    document.querySelector('.nav-item').classList.add('active');
+  }
+
+  applyFilters();
+});
+
+// ═══════════════════════════════════════════
+// CITY SCORECARDS
+// ═══════════════════════════════════════════
+function renderCities() {
+  const grid = document.getElementById('cityGrid');
+  grid.innerHTML = CITY_DATA.map(city => {
+    const c = Math.PI * 2 * 31; // circumference
+    const offset = c - (city.overall / 100) * c;
+    const ringColor = city.overall >= 80 ? '#10b981' : city.overall >= 65 ? '#f59e0b' : '#6366f1';
+
+    const dims = city.dims.map(d => `
+      <div class="dim-bar">
+        <div class="dim-name">${d.name}</div>
+        <div class="dim-track"><div class="dim-fill" style="width:${d.val}%;background:${d.color};"></div></div>
+        <div class="dim-val" style="color:${d.color};">${d.val}</div>
+      </div>
+    `).join('');
+
+    return `
+      <div class="city-card" onclick="showCityDetail(this, '${city.name}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
+          <div>
+            <div class="city-name">${city.name}</div>
+            <div class="city-sub">${city.state} · ${city.gccs}+ GCCs · ${city.share}% share</div>
+          </div>
+          <span style="font-size:0.65rem;font-weight:700;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,0.06);color:${city.tagColor};border:1px solid ${city.tagColor}40;">${city.tag}</span>
+        </div>
+        <div class="city-score-wrap" style="margin-bottom:1rem;">
+          <svg class="ring-svg" viewBox="0 0 80 80">
+            <circle class="ring-bg" cx="40" cy="40" r="31"/>
+            <circle class="ring-fill" cx="40" cy="40" r="31"
+              stroke="${ringColor}"
+              stroke-dasharray="${c}"
+              stroke-dashoffset="${offset}"/>
+          </svg>
+          <div class="ring-label">${city.overall}</div>
+        </div>
+        <div class="city-dims">${dims}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function showCityDetail(el, name) {
+  document.querySelectorAll('.city-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  const city = CITY_DATA.find(c => c.name === name);
+  if (!city || !city.details) return;
+  // Could expand to a drawer; for now, show alert-style tooltip
+  const d = city.details;
+  // Show in detail panel if registry view; otherwise show inline
+}
+
+// ═══════════════════════════════════════════
+// INCENTIVES
+// ═══════════════════════════════════════════
+function renderIncentives() {
+  const table = document.getElementById('incentiveTable');
+  const states = Object.keys(INCENTIVE_DATA.states);
+
+  const headerCells = states.map(s => `<th>${s}</th>`).join('');
+  const headerRow = `<thead><tr><th>Incentive Type</th>${headerCells}</tr></thead>`;
+
+  const bodyRows = INCENTIVE_DATA.rows.map(row => {
+    const cells = states.map(state => {
+      const val = INCENTIVE_DATA.states[state][INCENTIVE_DATA.rows.indexOf(row)];
+      if (val === '✓') return `<td><span class="check">✓</span></td>`;
+      if (val === '✗') return `<td><span class="cross">—</span></td>`;
+      return `<td><span class="partial">Partial</span></td>`;
+    }).join('');
+    return `<tr><td>${row}</td>${cells}</tr>`;
+  }).join('');
+
+  table.innerHTML = headerRow + `<tbody>${bodyRows}</tbody>`;
+}
+
+// ═══════════════════════════════════════════
+// PROVIDERS
+// ═══════════════════════════════════════════
+function renderProviders() {
+  const filter = document.getElementById('providerTypeFilter').value;
+  const data = filter ? PROVIDER_DATA.filter(p => p.type === filter) : PROVIDER_DATA;
+  const grid = document.getElementById('providerGrid');
+
+  const typeLabel = { advisor: 'Setup Advisor', eor: 'EOR Provider', re: 'Real Estate' };
+  const typeColor = { advisor: '#6366f1', eor: '#10b981', re: '#f59e0b' };
+
+  grid.innerHTML = data.map(p => {
+    const ratings = Object.entries(p.ratings).map(([name, val]) => `
+      <div class="rating-row">
+        <div class="rating-name">${name}</div>
+        <div class="rating-track"><div class="rating-fill" style="width:${val}%;background:${typeColor[p.type]};"></div></div>
+        <div class="rating-val">${val}</div>
+      </div>
+    `).join('');
+
+    return `
+      <div class="provider-card">
+        <div class="provider-header">
+          <div class="provider-icon">${p.icon}</div>
+          <div>
+            <div class="provider-name">${p.name}</div>
+            <div class="provider-type" style="margin-top:2px;">
+              <span style="font-size:0.68rem;font-weight:700;color:${typeColor[p.type]};background:${typeColor[p.type]}18;border:1px solid ${typeColor[p.type]}30;padding:1px 6px;border-radius:99px;">${typeLabel[p.type]}</span>
+              <span style="font-size:0.68rem;color:var(--dim);margin-left:6px;">${p.hq} · since ${p.since}</span>
+            </div>
+          </div>
+          <div style="margin-left:auto;text-align:right;">
+            <div style="font-size:0.68rem;color:var(--muted);">${p.clients}+ clients</div>
+          </div>
+        </div>
+        <p style="font-size:0.78rem;color:var(--muted);line-height:1.6;margin-bottom:1rem;">${p.desc}</p>
+        <div class="detail-section-title" style="margin-bottom:0.5rem;">Independent Ratings (0–100)</div>
+        <div class="provider-ratings">${ratings}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+// CALCULATOR
+// ═══════════════════════════════════════════
+const CITY_SETUP_COSTS = {
+  bengaluru: 180000, hyderabad: 160000, chennai: 140000,
+  pune: 140000, ncrdelhi: 170000, mumbai: 200000
+};
+
+const CITY_OVERHEAD = {
+  bengaluru: 12000, hyderabad: 10000, chennai: 9000,
+  pune: 9500, ncrdelhi: 11000, mumbai: 14000
+};
+
+function updateCalc() {
+  const headcount = parseInt(document.getElementById('headcount').value);
+  const ctc = parseInt(document.getElementById('ctc').value);
+  const markup = parseInt(document.getElementById('markup').value) / 100;
+  const horizon = parseInt(document.getElementById('horizon').value);
+  const city = document.getElementById('calcCity').value;
+
+  document.getElementById('val-headcount').textContent = headcount + ' people';
+  document.getElementById('val-ctc').textContent = '$' + ctc.toLocaleString();
+  document.getElementById('val-markup').textContent = (markup * 100).toFixed(0) + '%';
+  document.getElementById('val-horizon').textContent = horizon + ' year' + (horizon > 1 ? 's' : '');
+
+  const totalPayroll = headcount * ctc;
+  const eorAnnual = totalPayroll * (1 + markup) + headcount * 1200; // platform fees
+  const eorTotal = eorAnnual * horizon;
+
+  const setupCost = CITY_SETUP_COSTS[city] || 160000;
+  const overheadAnnual = headcount * (CITY_OVERHEAD[city] || 10000);
+  const entityAnnual = totalPayroll + overheadAnnual;
+  const entityTotal = setupCost + (entityAnnual * horizon);
+
+  const saving = eorTotal - entityTotal;
+  const breakEvenMonths = Math.max(0, Math.round(setupCost / ((eorAnnual - entityAnnual) / 12)));
+  const crossover = Math.ceil(setupCost / ((ctc * markup + 1200) * 12 / 12));
+
+  const recommend = saving > 0 && breakEvenMonths <= horizon * 12;
+  const eorPct = (eorTotal / (eorTotal + entityTotal) * 100).toFixed(0);
+  const entityPct = (100 - eorPct).toFixed(0);
+
+  document.getElementById('calcResults').innerHTML = `
+    <div class="result-card">
+      <div class="result-card-title">Total ${horizon}-Year Cost Comparison</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div>
+          <div style="font-size:0.7rem;color:var(--muted);margin-bottom:4px;">EOR Route</div>
+          <div class="result-big" style="color:var(--red);">$${(eorTotal/1000000).toFixed(2)}M</div>
+          <div class="result-sub">${horizon}yr total cost</div>
+        </div>
+        <div>
+          <div style="font-size:0.7rem;color:var(--muted);margin-bottom:4px;">Own Entity</div>
+          <div class="result-big" style="color:var(--green);">$${(entityTotal/1000000).toFixed(2)}M</div>
+          <div class="result-sub">${horizon}yr incl. setup</div>
+        </div>
+      </div>
+      <div class="vs-bar" style="margin-top:1rem;">
+        <div class="vs-seg" style="flex:${eorPct};background:rgba(239,68,68,0.25);color:#f87171;">EOR ${eorPct}%</div>
+        <div class="vs-seg" style="flex:${entityPct};background:rgba(16,185,129,0.2);color:var(--green);">Entity ${entityPct}%</div>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="result-card-title">Key Metrics</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem 1.5rem;">
+        <div>
+          <div style="font-size:0.68rem;color:var(--muted);">${horizon}yr saving (entity wins)</div>
+          <div style="font-size:1.25rem;font-weight:800;color:${saving > 0 ? 'var(--green)' : 'var(--red)'};">${saving > 0 ? '+' : ''}$${Math.abs(saving/1000).toFixed(0)}k</div>
+        </div>
+        <div>
+          <div style="font-size:0.68rem;color:var(--muted);">Break-even point</div>
+          <div style="font-size:1.25rem;font-weight:800;color:var(--accent2);">${breakEvenMonths > 60 ? '>60mo' : breakEvenMonths + ' months'}</div>
+        </div>
+        <div>
+          <div style="font-size:0.68rem;color:var(--muted);">Headcount crossover</div>
+          <div style="font-size:1.25rem;font-weight:800;color:var(--gold);">${crossover} people</div>
+        </div>
+        <div>
+          <div style="font-size:0.68rem;color:var(--muted);">Setup cost (${city})</div>
+          <div style="font-size:1.25rem;font-weight:800;">$${(setupCost/1000).toFixed(0)}k</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="recommendation-box" style="${recommend ? 'background:rgba(16,185,129,0.06);border-color:rgba(16,185,129,0.3);' : 'background:rgba(245,158,11,0.06);border-color:rgba(245,158,11,0.3);'}">
+      <strong style="color:${recommend ? 'var(--green)' : 'var(--gold)'};">${recommend ? '✓ Own entity is the right call' : '⚠ EOR may still make sense'}</strong>
+      <p style="margin-top:6px;color:var(--muted);font-size:0.8rem;line-height:1.6;">
+        ${recommend
+          ? `At ${headcount} heads with a ${horizon}-year horizon, setting up your own entity in ${city.charAt(0).toUpperCase()+city.slice(1)} saves ~$${(saving/1000).toFixed(0)}k vs. EOR. Break-even is ${breakEvenMonths} months. Start the entity process now — it takes 3–6 months.`
+          : `At ${headcount} heads, the break-even is ${breakEvenMonths} months. Over a ${horizon}-year horizon, the saving doesn't yet justify the setup overhead. Revisit when headcount crosses ${crossover}.`
+        }
+      </p>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+renderTable();
+renderProviders();
+</script>
+</body>
+</html>

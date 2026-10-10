@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GCC Intelligence — Pitch Deck</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --accent3: #c7d2fe;
+    --gold: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --dim: #475569;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    height: 56px;
+    background: rgba(10,10,15,0.9);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .nav-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .nav-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .nav-dot.active { background: var(--accent); transform: scale(1.4); }
+
+  /* SLIDES */
+  .slide {
+    min-height: 100vh;
+    padding: 80px 0 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide-inner {
+    width: 100%;
+    max-width: 1100px;
+    padding: 0 2.5rem;
+  }
+
+  /* SLIDE LABELS */
+  .slide-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .slide-label::before {
+    content: '';
+    display: block;
+    width: 24px; height: 1px;
+    background: var(--accent);
+  }
+
+  /* HERO */
+  #slide-0 {
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99,102,241,0.12) 0%, transparent 70%);
+  }
+
+  .hero-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-eyebrow::before {
+    content: '';
+    display: block;
+    width: 32px; height: 1px;
+    background: var(--accent);
+  }
+
+  .hero-title {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-title span {
+    background: linear-gradient(135deg, #6366f1 0%, #a78bfa 50%, #c7d2fe 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: 1.125rem;
+    color: var(--muted);
+    max-width: 560px;
+    line-height: 1.7;
+    margin-bottom: 3rem;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 3rem;
+    flex-wrap: wrap;
+  }
+
+  .hero-stat-val {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .hero-stat-val sup {
+    font-size: 1rem;
+    color: var(--accent2);
+  }
+
+  .hero-stat-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 6px;
+    letter-spacing: 0.04em;
+  }
+
+  .hero-bg-text {
+    position: absolute;
+    right: -2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: clamp(6rem, 14vw, 12rem);
+    font-weight: 900;
+    color: rgba(99,102,241,0.04);
+    letter-spacing: -0.04em;
+    pointer-events: none;
+    user-select: none;
+    line-height: 1;
+  }
+
+  /* TYPOGRAPHY UTILS */
+  h2 {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  p { color: var(--muted); line-height: 1.7; }
+
+  .accent { color: var(--accent2); }
+  .gold { color: var(--gold); }
+  .green { color: var(--green); }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: var(--accent); }
+
+  .card-grid {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .card-grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .card-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .card-grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+  /* TAGS */
+  .tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid;
+  }
+
+  .tag-accent { color: var(--accent2); border-color: rgba(99,102,241,0.35); background: rgba(99,102,241,0.08); }
+  .tag-gold { color: var(--gold); border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.08); }
+  .tag-green { color: var(--green); border-color: rgba(16,185,129,0.35); background: rgba(16,185,129,0.08); }
+  .tag-red { color: var(--red); border-color: rgba(239,68,68,0.35); background: rgba(239,68,68,0.08); }
+
+  /* DIVIDER */
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2rem 0;
+  }
+
+  /* PROBLEM SLIDE - ecosystem map */
+  .eco-map {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1.5rem;
+    align-items: center;
+    margin-top: 2rem;
+  }
+
+  .eco-col { display: flex; flex-direction: column; gap: 0.75rem; }
+
+  .eco-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .eco-center-box {
+    background: rgba(99,102,241,0.12);
+    border: 1.5px solid rgba(99,102,241,0.5);
+    border-radius: 14px;
+    padding: 1.25rem 1.75rem;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  .eco-arrow {
+    color: var(--dim);
+    font-size: 1.5rem;
+    text-align: center;
+  }
+
+  .eco-player {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .eco-player strong { display: block; font-size: 0.8rem; color: var(--text); margin-bottom: 2px; }
+  .eco-player span { font-size: 0.72rem; color: var(--muted); }
+
+  /* PAIN POINTS */
+  .pain-row {
+    display: grid;
+    grid-template-columns: 200px 1fr auto;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    margin-bottom: 0.75rem;
+  }
+
+  .pain-who { font-size: 0.8rem; font-weight: 700; }
+  .pain-what { font-size: 0.8rem; color: var(--muted); }
+  .pain-cost { font-size: 1rem; font-weight: 800; color: var(--red); white-space: nowrap; }
+
+  /* OPPORTUNITY TABLE */
+  .opp-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+  .opp-table th {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dim);
+    text-align: left;
+    padding: 0 1rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .opp-table td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid rgba(42,42,58,0.5);
+    font-size: 0.875rem;
+    vertical-align: top;
+  }
+  .opp-table td:first-child { font-weight: 600; color: var(--text); }
+  .opp-table td:not(:first-child) { color: var(--muted); }
+  .opp-table tr:last-child td { border-bottom: none; }
+  .opp-table tr.highlight td { background: rgba(99,102,241,0.05); }
+  .opp-table tr.highlight td:first-child { color: var(--accent2); }
+
+  /* BAR CHART */
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .bar-label { font-size: 0.8rem; color: var(--muted); width: 130px; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; }
+  .bar-val { font-size: 0.8rem; font-weight: 700; width: 60px; text-align: right; flex-shrink: 0; }
+
+  /* SOLUTION */
+  .solution-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 2rem;
+  }
+
+  .stack-layer {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    align-items: start;
+    border: 1px solid var(--border);
+    transition: border-color 0.2s;
+  }
+
+  .stack-layer:hover { border-color: var(--accent); }
+
+  .stack-layer-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding-top: 2px;
+  }
+
+  .stack-layer-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .stack-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    color: var(--text);
+  }
+
+  /* POSITIONING */
+  .pos-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-top: 1.75rem;
+  }
+
+  .pos-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+
+  .pos-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .pos-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .pos-vs {
+    display: grid;
+    grid-template-columns: 1fr 4px 1fr;
+    gap: 0.75rem;
+    align-items: start;
+    font-size: 0.8rem;
+  }
+
+  .pos-vs-col h4 { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+  .pos-vs-col ul { list-style: none; }
+  .pos-vs-col ul li { padding: 3px 0; color: var(--muted); }
+  .pos-vs-col ul li::before { content: '– '; color: var(--dim); }
+  .pos-vs-divider { background: var(--border); border-radius: 99px; }
+
+  /* TRACTION */
+  .traction-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    margin-top: 2rem;
+  }
+
+  .traction-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  .traction-num {
+    font-size: 2.25rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .traction-label { font-size: 0.8rem; color: var(--muted); }
+
+  /* ROADMAP */
+  .roadmap {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    margin-top: 2rem;
+    position: relative;
+  }
+
+  .roadmap::before {
+    content: '';
+    position: absolute;
+    top: 28px;
+    left: 16.67%;
+    right: 16.67%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 100%);
+    z-index: 0;
+  }
+
+  .roadmap-phase {
+    padding: 0 1.5rem;
+    position: relative;
+  }
+
+  .roadmap-dot {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 2px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--accent2);
+    margin-bottom: 1.25rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .roadmap-phase h3 { font-size: 0.875rem; color: var(--accent2); margin-bottom: 0.5rem; }
+  .roadmap-phase ul { list-style: none; }
+  .roadmap-phase ul li {
+    font-size: 0.8rem;
+    color: var(--muted);
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(42,42,58,0.4);
+  }
+  .roadmap-phase ul li:last-child { border-bottom: none; }
+  .roadmap-phase ul li::before { content: '→ '; color: var(--accent); }
+
+  /* CLOSING */
+  #slide-8 {
+    background: radial-gradient(ellipse 80% 60% at 50% 100%, rgba(99,102,241,0.1) 0%, transparent 70%);
+    text-align: center;
+  }
+
+  #slide-8 .slide-inner { display: flex; flex-direction: column; align-items: center; }
+
+  .closing-title {
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    max-width: 700px;
+  }
+
+  .closing-title span {
+    background: linear-gradient(135deg, #6366f1, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .closing-sub {
+    font-size: 1rem;
+    color: var(--muted);
+    max-width: 520px;
+    margin-bottom: 3rem;
+    line-height: 1.7;
+  }
+
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    background: var(--accent);
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: opacity 0.2s, transform 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .cta-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+
+  /* PROGRESS LINE */
+  .progress-line {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    height: 2px;
+    background: var(--accent);
+    transition: width 0.3s ease;
+    z-index: 99;
+  }
+
+  /* SLIDE NUMBER */
+  .slide-num {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 2rem;
+    font-size: 0.7rem;
+    color: var(--dim);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    z-index: 99;
+  }
+
+  /* QUOTE */
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 0.75rem 1.25rem;
+    background: rgba(99,102,241,0.06);
+    border-radius: 0 8px 8px 0;
+    margin: 1.25rem 0;
+    font-size: 0.9rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  blockquote strong { color: var(--text); font-style: normal; }
+
+  /* FOCUS FRAME */
+  .focus-frame {
+    border: 1.5px solid var(--accent);
+    border-radius: 12px;
+    padding: 1.5rem;
+    background: rgba(99,102,241,0.05);
+    margin: 1.5rem 0;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .card-grid-2, .card-grid-3, .card-grid-4 { grid-template-columns: 1fr; }
+    .eco-map { grid-template-columns: 1fr; }
+    .eco-arrow { transform: rotate(90deg); }
+    .pain-row { grid-template-columns: 1fr; }
+    .pos-grid { grid-template-columns: 1fr; }
+    .traction-grid { grid-template-columns: 1fr; }
+    .roadmap { grid-template-columns: 1fr; }
+    .roadmap::before { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">GCC Intel</div>
+  <div class="nav-dots" id="navDots"></div>
+</nav>
+<div class="progress-line" id="progressLine"></div>
+<div class="slide-num" id="slideNum">01 / 09</div>
+
+<!-- ═══════════════════════════════════════════
+     SLIDE 0 · COVER
+═══════════════════════════════════════════ -->
+<section class="slide" id="slide-0">
+  <div class="slide-inner">
+    <div class="hero-eyebrow">GCC Intelligence Platform</div>
+    <h1 class="hero-title">India's $98B GCC market<br>runs on <span>rumour and referral.</span></h1>
+    <p class="hero-sub">2,100+ Global Capability Centres. Fragmented data. No neutral source of truth. Every firm setting up in India navigates location, providers, incentives and talent costs blind.</p>
+    <div class="hero-stats">
+      <div>
+        <div class="hero-stat-val">2,117</div>
+        <div class="hero-stat-label">GCCs operating today</div>
+      </div>
+      <div>
+        <div class="hero-stat-val">$98<sup>B</sup></div>
+        <div class="hero-stat-label">export revenue FY2026</div>
+      </div>
+      <div>
+        <div class="hero-stat-val">1,380</div>
+        <div class="hero-stat-label">new GCCs targeted by 2031</div>
+      </div>
+      <div>
+        <div class="hero-stat-val">0</div>
+        <div class="hero-stat-label">neutral intelligence platforms</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-bg-text">GCC</div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SLIDE 1 · THE MARKET
+═══════════════════════════════════════════ -->
+<section class="slide" id="slide-1">
+  <div class="slide-inner">
+    <div class="slide-label">Market Context</div>
+    <h2>A $98B market with a<br><span class="accent">map drawn in pencil</span></h2>
+    <p style="max-width:620px; margin-bottom: 2rem;">India hosts more GCCs than any country on earth. The market grew from $30B in 2019 to $98.4B in 2026 — and 7 states are racing to add 1,380 more centres by 2031. The infrastructure exists. The intelligence doesn't.</p>
+
+    <div class="card-grid card-grid-3">
+      <div class="card">
+        <div class="tag tag-accent" style="margin-bottom:1rem;">Scale</div>
+        <div style="margin-bottom:0.5rem;">
+          <div style="font-size:1.75rem;font-weight:800;">3,728</div>
+          <div style="font-size:0.8rem;color:var(--muted);">individual GCC units across India</div>
+        </div>
+        <hr>
+        <div class="bar-row" style="margin-bottom:4px;"><div class="bar-label" style="font-size:0.75rem;">Bengaluru</div><div class="bar-track"><div class="bar-fill" style="width:37%;background:var(--accent);"></div></div><div class="bar-val" style="color:var(--accent);">37%</div></div>
+        <div class="bar-row" style="margin-bottom:4px;"><div class="bar-label" style="font-size:0.75rem;">Hyderabad</div><div class="bar-track"><div class="bar-fill" style="width:22%;background:var(--accent2);"></div></div><div class="bar-val" style="color:var(--accent2);">22%</div></div>
+        <div class="bar-row" style="margin-bottom:4px;"><div class="bar-label" style="font-size:0.75rem;">Chennai + NCR</div><div class="bar-track"><div class="bar-fill" style="width:18%;background:#a78bfa;"></div></div><div class="bar-val" style="color:#a78bfa;">18%</div></div>
+        <div class="bar-row"><div class="bar-label" style="font-size:0.75rem;">Pune + Mumbai</div><div class="bar-track"><div class="bar-fill" style="width:17%;background:#c4b5fd;"></div></div><div class="bar-val" style="color:#c4b5fd;">17%</div></div>
+      </div>
+      <div class="card">
+        <div class="tag tag-gold" style="margin-bottom:1rem;">Momentum</div>
+        <div style="margin-bottom:1rem;">
+          <div style="font-size:1.75rem;font-weight:800;color:var(--gold);">+40%</div>
+          <div style="font-size:0.8rem;color:var(--muted);">revenue growth FY23→FY24</div>
+        </div>
+        <hr>
+        <div style="font-size:0.82rem;color:var(--muted);line-height:1.6;">
+          <div style="margin-bottom:6px;">→ GCCs took <strong style="color:var(--text);">40%+</strong> of all India office leasing in 2025</div>
+          <div style="margin-bottom:6px;">→ <strong style="color:var(--text);">220+</strong> GCCs now in Tier-2/3 cities</div>
+          <div>→ 53% of GCCs now at Portfolio Hub stage, up from 18% a decade ago</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tag tag-green" style="margin-bottom:1rem;">State Race</div>
+        <div style="margin-bottom:1rem;">
+          <div style="font-size:1.75rem;font-weight:800;color:var(--green);">11</div>
+          <div style="font-size:0.8rem;color:var(--muted);">states with active GCC policies</div>
+        </div>
+        <hr>
+        <div style="font-size:0.82rem;color:var(--muted);line-height:1.7;">
+          <div>Karnataka → 500 new GCCs by 2029</div>
+          <div>Maharashtra → 400 GCCs, 400k jobs</div>
+          <div>Gujarat → 250+ centres</div>
+          <div>Rajasthan, UP, AP, Haryana, Kerala also active</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SLIDE 2 · THE PROBLEM
+═══════════════════════════════════════════ -->
+<section class="slide" id="slide-2">
+  <div class="slide-inner">
+    <div class="slide-label">Problem</div>
+    <h2>The ecosystem has every player<br><span class="accent">except a neutral one</span></h2>
+
+    <div class="eco-map">
+      <div class="eco-col">
+        <div class="eco-player">
+          <strong>Global Corp (HQ)</strong>
+          <span>Needs: location, entity, talent, RE, compliance — fast, with confidence</span>
+        </div>
+        <div class="eco-player">
+          <strong>Setup Advisors</strong>
+          <span>ANSR, Zinnov, EY, Deloitte, Wisemonk. Conflicted: often prefer known partners</span>
+        </div>
+        <div class="eco-player">
+          <strong>EOR Providers</strong>
+          <span>Rippling, Deel, Multiplier, Wisemonk. Incentivised to delay entity formation</span>
+        </div>
+      </div>
+
+      <div class="eco-center">
+        <div class="eco-arrow">⟵</div>
+        <div class="eco-center-box">
+          <div style="font-size:0.7rem;color:var(--muted);margin-bottom:6px;letter-spacing:0.1em;text-transform:uppercase;">The Vacuum</div>
+          <div style="color:var(--accent2);">No neutral</div>
+          <div style="color:var(--accent2);">intelligence layer</div>
+        </div>
+        <div class="eco-arrow">⟶</div>
+      </div>
+
+      <div class="eco-col">
+        <div class="eco-player">
+          <strong>Real Estate Firms</strong>
+          <span>JLL, CBRE, Cushman. Incentivised on transaction; limited on talent/ops data</span>
+        </div>
+        <div class="eco-player">
+          <strong>State Govts</strong>
+          <span>11 states with GCC policies. Each publishes selectively. No comparison layer</span>
+        </div>
+        <div class="eco-player">
+          <strong>Recruiters / Staffing</strong>
+          <span>TeamLease, Randstad, niche headhunters. No cross-market salary benchmarking</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:1.75rem;">
+      <blockquote>
+        <strong>"Every GCC setup starts with a 3-month discovery sprint."</strong> Location. Incentives. Provider due diligence. Office costs. Talent benchmarks. All gathered by hand, mostly from providers who have a stake in the answer.
+      </blockquote>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SLIDE 3 · WHO'S HURT, HOW MUCH
+═══════════════════════════════════════════ -->
+<section class="slide" id="slide-3">
+  <div class="slide-inner">
+    <div class="slide-label">Problem — Quantified</div>
+    <h2>Information asymmetry has<br><span class="accent">a price tag</span></h2>
+    <p style="max-width:620px;margin-bottom:1.75rem;">Every stakeholder pays — in money, time or worse decisions. The asymmetry isn't accidental; every incumbent profits from opacity.</p>
+
+    <div class="pain-row">
+      <div>
+        <div class="pain-who">🏢 Corp Setting Up</div>
+        <div class="tag tag-red" style="margin-top:4px;">Highest exposure</div>
+      </div>
+      <div class="pain-what">Spends 3–6 months on location/provider discovery. Overpays EOR by $150k–$400k/yr past the 30-head crossover. City choice locks in talent pipeline for 10+ years. Wrong call = permanent cost disadvantage.</div>
+      <div class="pain-cost">$150–400k<br><span style="font-size:0.7rem;font-weight:400;color:var(--dim);">annual EOR overpay alone</span></div>
+    </div>
+
+    <div class="pain-row">
+      <div>
+        <div class="pain-who">🏦 PE / VC</div>
+        <div class="tag tag-gold" style="margin-top:4px;">High exposure</div>
+      </div>
+      <div class="pain-what">Portfolio co. building GCC with no benchmark data. Can't audit provider quality or pricing. Can't compare portfolio GCC efficiency vs. peers. No market map = can't source advisory targets.</div>
+      <div class="pain-cost">Blind<br><span style="font-size:0.7rem;font-weight:400;color:var(--dim);">on portfolio exposure</span></div>
+    </div>
+
+    <div class="pain-row">
+      <div>
+        <div class="pain-who">📐 Advisors / Consultants</div>
+        <div class="tag tag-accent" style="margin-top:4px;">Medium exposure</div>
+      </div>
+      <div class="pain-what">Manual research every engagement. Each deck is built from scratch. No defensible benchmarks. Client increasingly asks "where did you get this data?" — answer is awkward.</div>
+      <div class="pain-cost">30–60 days<br><span style="font-size:0.7rem;font-weight:400;color:var(--dim);">research per engagement</span></div>
+    </div>
+
+    <div class="pain-row">
+      <div>
+        <div class="pain-who">🏛 State Govts</div>
+        <div class="tag tag-accent" style="margin-top:4px;">Medium exposure</div>
+      </div>
+      <div class="pain-what">Compete for GCC inflows but can't see which firms are currently evaluating locations, what rival states are offering, or which of their own incentives are actually landing. Compete blind.</div>
+      <div class="pain-cost">Opaque<br><span style="font-size:0.7rem;font-weight:400;color:var(--dim);">competitor positioning</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SLIDE 4 · OPPORTUNITIES
+═══════════════════════════════════════════ -->
+<section class="slide" id="slide-4">
+  <div class="slide-inner">
+    <div class="slide-label">Opportunities</div>
+    <h2>Four bets. One is<br><span class="accent">clearly first.</span></h2>
+    <p style="max-width:620px;margin-bottom:0.5rem;">The information gap shows up in four distinct product opportunities, each with different buyers, moats and time-to-value. They're not equal.</p>
+
+    <table class="opp-table">
+      <thead>
+        <tr>
+          <th>Opportunity</th>
+          <th>Buyer</th>
+          <th>Data source</th>
+          <th>Moat</th>
+          <th>Revenue model</th>
+          <th>Priority</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="highlight">
+          <td>📍 GCC Setup Intelligence<br><span style="font-weight:400;font-size:0.78rem;color:var(--muted);">Location scoring, incentive comparison, provider benchmarks</span></td>
+          <td>Corp + advisors</td>
+          <td>Filings, state portals, primary research</td>
+          <td>Structured + proprietary data; network effects from each setup</td>
+          <td>SaaS + project licence</td>
+          <td><span class="tag tag-green">Wedge</span></td>
+        </tr>
+        <tr>
+          <td>🗂 GCC Market Registry<br><span style="font-weight:400;font-size:0.78rem;color:var(--muted);">Which GCCs exist, where, who runs them, what they do</span></td>
+          <td>PE/VC, recruiters, state govts</td>
+          <td>MCA filings, NASSCOM, LinkedIn signals</td>
+          <td>Coverage + freshness; hard to build, easy to sell</td>
+          <td>API / data licence</td>
+          <td><span class="tag tag-accent">Parallel</span></td>
+        </tr>
+        <tr>
+          <td>💰 Talent &amp; Cost Benchmarks<br><span style="font-weight:400;font-size:0.78rem;color:var(--muted);">Role-level salary bands, attrition rates, hiring velocity by city</span></td>
+          <td>GCC heads, CHROs</td>
+          <td>Aggregated JD / offer data; HR partnerships</td>
+          <td>Scale; requires volume before it's credible</td>
+          <td>Subscription + reports</td>
+          <td><span class="tag tag-gold">Phase 2</span></td>
+        </tr>
+        <tr>
+          <td>🏛 State Deal Room<br><span style="font-weight:400;font-size:0.78rem;color:var(--muted);">Incentive deal-tracking, ITO introductions, pipeline visibility</span></td>
+          <td>State ITOs</td>
+          <td>State GCC policies, deal flow from corp buyers</td>
+          <td>Becomes more valuable as GCC buyer side scales</td>
+          <td>Govt SaaS / success fee</td>
+          <td><span class="tag tag-gold">Phase 3</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="focus-frame" style="margin-top:1.75rem;">
+      <strong style="color:var(--accent2);">Why Setup Intelligence first?</strong>
+      <p style="margin-top:6px;font-size:0.875rem;">It has a named buyer with budget ($5–50M setup decision), a clear before/after (3-month research sprint → 2-week structured query), and every engagement creates data that improves the product for the next buyer. It builds the registry as a byproduct.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SLIDE 5 · SOLUTION
+═══════════════════════════════════════════ -->
+<section class="slide" id="slide-5">
+  <div class="slide-inner">
+    <div class="slide-label">Solution</div>
+    <h2>One platform.<br><span class="accent">Three surfaces. One moat.</span></h2>
+    <p style="max-width:620px;margin-bottom:0.25rem;">GCC Intel is the first neutral data layer for India's Global Capability Centre market. Search, compare and track — with the same objectivity a buyer expects from a Bloomberg terminal, not a broker.</p>
+
+    <div class="solution-stack">
+      <div class="stack-layer" style="background:rgba(99,102,241,0.06);">
+        <div class="stack-layer-label">Surface 1<br>Setup Console</div>
+        <div class="stack-layer-items">
+          <div class="stack-item">City Scorecard (talent depth, cost, infra, incentives)</div>
+          <div class="stack-item">State Incentive Comparison</div>
+          <div class="stack-item">Provider Benchmarks (advisor / EOR / RE)</div>
+          <div class="stack-item">Office Cost Estimator</div>
+          <div class="stack-item">EOR → entity crossover calculator</div>
+          <div class="stack-item">Regulatory timeline tracker</div>
+        </div>
+      </div>
+      <div class="stack-layer">
+        <div class="stack-layer-label">Surface 2<br>Market Registry</div>
+        <div class="stack-layer-items">
+          <div class="stack-item">GCC directory (firm, city, sector, headcount, vintage)</div>
+          <div class="stack-item">New entrant tracking</div>
+          <div class="stack-item">Expansion signals (RE filings, job postings)</div>
+          <div class="stack-item">Sector heat maps</div>
+          <div class="stack-item">Export + API access</div>
+        </div>
+      </div>
+      <div class="stack-layer">
+        <div class="stack-layer-label">Surface 3<br>Intelligence Feed</div>
+        <div class="stack-layer-items">
+          <div class="stack-item">State policy change alerts</div>
+          <div class="stack-item">New GCC announcements</div>
+          <div class="stack-item">Office leasing signals (JLL/CBRE parsed)</div>
+          <div class="stack-item">Talent cost trend reports</div>
+          <div class="stack-item">Weekly briefings</div>
+        </div>
+      </div>
+      <div class="stack-layer" style="background:rgba(245,158,11,0.04);border-color:rgba(245,158,11,0.25);">
+        <div class="stack-layer-label" style="color:var(--gold);">The Moat<br>Data Layer</div>
+        <div class="stack-layer-items">
+          <div class="stack-item" style="border-color:rgba(245,158,11,0.3);color:var(--gold);">MCA corporate filings</div>
+          <div class="stack-item" style="border-color:rgba(245,158,11,0.3);color:var(--gold);">State GCC policy corpus</div>
+          <div class="stack-item" style="border-color:rgba(245,158,11,0.3);color:var(--gold);">RE transaction data</div>
+          <div class="stack-item" style="border-color:rgba(245,158,11,0.3);color:var(--gold);">Job posting signals</div>
+          <div class="stack-item" style="border-color:rgba(245,158,11,0.3);color:var(--gold);">Primary provider interviews</div>
+          <div class="stack-item" style="border-color:rgba(245,158,11,0.3);color:var(--gold);">Engagement data flywheel</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SLIDE 6 · POSITIONING
+═══════════════════════════════════════════ -->
+<section class="slide" id="slide-6">
+  <div class="slide-inner">
+    <div class="slide-label">Positioning</div>
+    <h2>Why each stakeholder picks<br><span class="accent">GCC Intel over what they use today</span></h2>
+    <p style="max-width:620px;margin-bottom:0.25rem;">Today's alternatives are all either conflicted, fragmented, or expensive. GCC Intel wins on neutrality + specificity.</p>
+
+    <div class="pos-grid">
+      <div class="pos-card">
+        <div class="pos-card-header">
+          <div class="pos-icon" style="background:rgba(99,102,241,0.12);">🏢</div>
+          <div>
+            <h3 style="margin:0;">Global Corp / GCC Team</h3>
+            <span class="tag tag-accent" style="margin-top:4px;">Primary buyer</span>
+          </div>
+        </div>
+        <div class="pos-vs">
+          <div class="pos-vs-col">
+            <h4>Today</h4>
+            <ul>
+              <li>Adviser with skin in the game</li>
+              <li>3-month desk research sprint</li>
+              <li>Broker-sourced RE data</li>
+              <li>Anecdotal salary benchmarks</li>
+            </ul>
+          </div>
+          <div class="pos-vs-divider"></div>
+          <div class="pos-vs-col">
+            <h4>With GCC Intel</h4>
+            <ul>
+              <li>Neutral scored comparison</li>
+              <li>Answers in hours, not months</li>
+              <li>Structured incentive comparison</li>
+              <li>Provider track record, not pitch deck</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="pos-card">
+        <div class="pos-card-header">
+          <div class="pos-icon" style="background:rgba(245,158,11,0.12);">🏦</div>
+          <div>
+            <h3 style="margin:0;">PE / VC Fund</h3>
+            <span class="tag tag-gold" style="margin-top:4px;">Data licence buyer</span>
+          </div>
+        </div>
+        <div class="pos-vs">
+          <div class="pos-vs-col">
+            <h4>Today</h4>
+            <ul>
+              <li>Bain / McKinsey one-off reports</li>
+              <li>NASSCOM aggregate stats</li>
+              <li>No firm-level GCC data</li>
+              <li>Can't comp-check portfolio GCCs</li>
+            </ul>
+          </div>
+          <div class="pos-vs-divider"></div>
+          <div class="pos-vs-col">
+            <h4>With GCC Intel</h4>
+            <ul>
+              <li>Always-on registry with signals</li>
+              <li>Expansion / contraction alerts</li>
+              <li>Sector and city heat maps</li>
+              <li>Portfolio benchmarking</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="pos-card">
+        <div class="pos-card-header">
+          <div class="pos-icon" style="background:rgba(16,185,129,0.12);">📐</div>
+          <div>
+            <h3 style="margin:0;">Advisory Firm</h3>
+            <span class="tag tag-green" style="margin-top:4px;">Workflow tool</span>
+          </div>
+        </div>
+        <div class="pos-vs">
+          <div class="pos-vs-col">
+            <h4>Today</h4>
+            <ul>
+              <li>Manual research per engagement</li>
+              <li>Sourced from providers being evaluated</li>
+              <li>Decks rebuilt every project</li>
+              <li>No defensible benchmark citations</li>
+            </ul>
+          </div>
+          <div class="pos-vs-divider"></div>
+          <div class="pos-vs-col">
+            <h4>With GCC Intel</h4>
+            <ul>
+              <li>Live data in 2 days, not 6 weeks</li>
+              <li>Citable, neutral third-party source</li>
+              <li>Provider benchmarks to challenge bids</li>
+              <li>Recurring licence per seat</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="pos-card">
+        <div class="pos-card-header">
+          <div class="pos-icon" style="background:rgba(239,68,68,0.12);">🏛</div>
+          <div>
+            <h3 style="margin:0;">State ITO / Govt</h3>
+            <span class="tag tag-red" style="margin-top:4px;">Phase 3 buyer</span>
+          </div>
+        </div>
+        <div class="pos-vs">
+          <div class="pos-vs-col">
+            <h4>Today</h4>
+            <ul>
+              <li>One-off investor roadshows</li>
+              <li>No visibility on rival state offers</li>
+              <li>Can't identify firms in evaluation</li>
+              <li>Policy impact is unmeasured</li>
+            </ul>
+          </div>
+          <div class="pos-vs-divider"></div>
+          <div class="pos-vs-col">
+            <h4>With GCC Intel</h4>
+            <ul>
+              <li>Deal room + pipeline visibility</li>
+              <li>Rival incentive monitoring</li>
+              <li>Demand-side signals from corp queries</li>
+              <li>Policy impact dashboard</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SLIDE 7 · ROADMAP + GO-TO-MARKET
+═══════════════════════════════════════════ -->
+<section class="slide" id="slide-7">
+  <div class="slide-inner">
+    <div class="slide-label">Go-to-Market</div>
+    <h2>Nail one use case.<br><span class="accent">Build the flywheel.</span></h2>
+    <p style="max-width:620px;margin-bottom:0.5rem;">Start with the highest-pain buyer (corp doing setup), build the data layer through each engagement, then layer in adjacent surfaces once the registry is defensible.</p>
+
+    <div class="roadmap">
+      <div class="roadmap-phase">
+        <div class="roadmap-dot">1</div>
+        <h3>0–9 months · Wedge</h3>
+        <div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.75rem;">10 pilot engagements. Charge for the output, build the data layer in the process.</div>
+        <ul>
+          <li>City Scorecard (6 metros + 4 Tier-2)</li>
+          <li>State incentive comparison (11 states)</li>
+          <li>20 provider benchmarks (EOR, advisors, RE)</li>
+          <li>EOR crossover calculator live</li>
+          <li>Sell to corp GCC teams + 3 advisory firms</li>
+        </ul>
+      </div>
+      <div class="roadmap-phase">
+        <div class="roadmap-dot">2</div>
+        <h3>9–18 months · Registry</h3>
+        <div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.75rem;">Launch the GCC Market Registry as a separate product tier. Unlock PE/VC and recruiter buyers.</div>
+        <ul>
+          <li>1,000+ GCCs in structured registry</li>
+          <li>MCA filing ingestion pipeline live</li>
+          <li>Expansion signal tracking (RE + JD)</li>
+          <li>API / data licence product</li>
+          <li>First PE fund data subscription</li>
+        </ul>
+      </div>
+      <div class="roadmap-phase">
+        <div class="roadmap-dot">3</div>
+        <h3>18–30 months · Platform</h3>
+        <div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.75rem;">Full platform with talent benchmarks and state deal room. Multi-sided network effects kick in.</div>
+        <ul>
+          <li>Talent cost benchmarks (role × city)</li>
+          <li>State Deal Room (3 state pilots)</li>
+          <li>Intelligence Feed (policy + market alerts)</li>
+          <li>NASSCOM / state govt partnerships</li>
+          <li>Series A with 3-side network evidence</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2.5rem;">
+      <div class="card" style="text-align:center;">
+        <div style="font-size:1.5rem;font-weight:800;color:var(--accent2);">$25–75k</div>
+        <div style="font-size:0.78rem;color:var(--muted);margin-top:4px;">per-engagement licence (Phase 1)<br>for corp setup teams</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:1.5rem;font-weight:800;color:var(--gold);">$30–60k</div>
+        <div style="font-size:0.78rem;color:var(--muted);margin-top:4px;">annual data licence (Phase 2)<br>for PE/VC + advisory firms</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:1.5rem;font-weight:800;color:var(--green);">$100–250k</div>
+        <div style="font-size:0.78rem;color:var(--muted);margin-top:4px;">state SaaS (Phase 3)<br>deal room + analytics</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     SLIDE 8 · CLOSING
+═══════════════════════════════════════════ -->
+<section class="slide" id="slide-8">
+  <div class="slide-inner">
+    <div class="hero-eyebrow" style="justify-content:center;">The ask</div>
+    <h2 class="closing-title">The GCC market is growing<br>faster than its <span>infrastructure.</span></h2>
+    <p class="closing-sub">Every firm setting up in India is navigating a $5–50M decision with bad maps. We're building the map — neutral, structured, always-on. The prototype is live.</p>
+    <a href="prototype/index.html" class="cta-btn" target="_blank">
+      ↓ See the working prototype
+    </a>
+  </div>
+</section>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const navDots = document.getElementById('navDots');
+  const progressLine = document.getElementById('progressLine');
+  const slideNumEl = document.getElementById('slideNum');
+
+  // Create nav dots
+  slides.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    dot.title = `Slide ${i + 1}`;
+    dot.addEventListener('click', () => {
+      slides[i].scrollIntoView({ behavior: 'smooth' });
+    });
+    navDots.appendChild(dot);
+  });
+
+  const dots = document.querySelectorAll('.nav-dot');
+
+  // Intersection observer for active slide
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const idx = Array.from(slides).indexOf(entry.target);
+        dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+        const pct = ((idx + 1) / slides.length) * 100;
+        progressLine.style.width = pct + '%';
+        slideNumEl.textContent = String(idx + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0');
+      }
+    });
+  }, { threshold: 0.5 });
+
+  slides.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
